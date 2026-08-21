@@ -8,7 +8,7 @@
     <!-- Title & Action Row -->
     <div class="title-action-row">
       <div class="title-left">
-        <h1 class="page-title">จัดการกิจกรรม (Event Management)</h1>
+        <h1 class="page-title">จัดการกิจกรรม</h1>
         <p class="page-subtitle">แก้ไข ลบ หรือดูผู้ลงทะเบียนเข้าร่วมแต่ละกิจกรรม</p>
       </div>
 
@@ -32,9 +32,9 @@
         <span class="th-col th-date">วันที่จัดงาน</span>
         <span class="th-col th-location">สถานที่</span>
         <span class="th-col th-category">ประเภท</span>
-        <span class="th-col th-capacity">จำนวนผู้สมัคร / ที่นั่ง</span>
+        <span class="th-col th-capacity">จำนวนผู้สมัคร</span>
         <span class="th-col th-status">สถานะ</span>
-        <span class="th-col th-actions">การจัดการ</span>
+        <span class="th-col th-actions" aria-hidden="true"></span>
       </div>
 
       <!-- Events List (Rows & Expansion Panes) -->
@@ -73,16 +73,32 @@
                 <button 
                   type="button" 
                   class="btn-toggle-registrants"
+                  [class.active]="expandedEventId() === item.id"
                   (click)="toggleExpand(item.id)"
+                  [title]="expandedEventId() === item.id ? 'ปิดรายชื่อผู้สมัคร' : 'ดูรายชื่อผู้ลงทะเบียน'"
                 >
-                  {{ expandedEventId() === item.id ? 'ปิดผู้ลงทะเบียน' : 'ดูผู้ลงทะเบียน' }}
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    @if (expandedEventId() === item.id) {
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    } @else {
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                      <circle cx="12" cy="12" r="3"></circle>
+                    }
+                  </svg>
+                  <span>{{ expandedEventId() === item.id ? 'ปิด' : 'รายละเอียด' }}</span>
                 </button>
                 <button 
                   type="button" 
                   class="btn-edit"
                   (click)="openEditEventModal(item, $event)"
+                  title="แก้ไขข้อมูลกิจกรรม"
                 >
-                  แก้ไข
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                  </svg>
+                  <span>แก้ไข</span>
                 </button>
               </div>
             </div>

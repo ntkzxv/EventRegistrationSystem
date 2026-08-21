@@ -400,17 +400,19 @@
 .th-capacity {
   width: 140px;
   flex-shrink: 0;
+  text-align: center;
 }
 
 .th-status {
   width: 100px;
   flex-shrink: 0;
+  text-align: center;
 }
 
 .th-actions {
   width: 240px;
   flex-shrink: 0;
-  text-align: right;
+  text-align: center;
 }
 
 .row-and-expansion {
@@ -484,6 +486,7 @@
   font-weight: 400;
   color: #4B5563;
   flex-shrink: 0;
+  text-align: center;
 }
 
 .td-capacity strong {
@@ -496,13 +499,14 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  justify-content: center;
 }
 
 .td-actions {
   width: 240px;
   flex-shrink: 0;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
 }
 
@@ -545,66 +549,78 @@
 .actions-column {
   display: flex;
   flex-direction: row;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   padding: 0px;
-  gap: 8px;
+  gap: 10px;
 }
 
 .btn-toggle-registrants {
   box-sizing: border-box;
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  padding: 10px 16px;
-  gap: 8px;
-  min-width: 111px;
-  height: 37px;
+  padding: 7px 14px;
+  gap: 6px;
+  height: 34px;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   border-radius: 6px;
   font-family: 'Inter', 'Prompt', sans-serif;
   font-style: normal;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 17px;
-  color: #111827;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  color: #374151;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-toggle-registrants:hover {
-  background: #F3F4F6;
+  background: #F9FAFB;
   border-color: #CBD5E1;
+  color: #111827;
+  transform: translateY(-1px);
+}
+
+.btn-toggle-registrants.active {
+  background: #EFF6FF;
+  border-color: #BFDBFE;
+  color: #1D4ED8;
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(37, 99, 235, 0.08);
 }
 
 .btn-edit {
   box-sizing: border-box;
-  display: flex;
+  display: inline-flex;
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  padding: 10px 16px;
-  gap: 8px;
-  min-width: 62px;
-  height: 37px;
+  padding: 7px 14px;
+  gap: 6px;
+  height: 34px;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   border-radius: 6px;
   font-family: 'Inter', 'Prompt', sans-serif;
   font-style: normal;
-  font-weight: 600;
-  font-size: 14px;
-  line-height: 17px;
-  color: #111827;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  color: #374151;
   cursor: pointer;
-  transition: all 0.15s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .btn-edit:hover {
-  background: #F3F4F6;
-  border-color: #CBD5E1;
+  background: #EFF6FF;
+  border-color: #93C5FD;
+  color: #1D4ED8;
+  transform: translateY(-1px);
 }
 
 /* ================= EXPANDED REGISTRANTS PANE ================= */
