@@ -1,7 +1,8 @@
 import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { NavbarComponent } from '../navbar/navbar.component';
 
 export interface RegistrantItem {
   id: string;
@@ -32,7 +33,7 @@ interface ToastState {
 @Component({
   selector: 'app-admin-event-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, NavbarComponent],
   templateUrl: './admin-event-management.component.html',
   styleUrls: ['./admin-event-management.component.css'],
 })
