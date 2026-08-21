@@ -21,7 +21,15 @@ export const routes: Routes = [
     component: AdminEventManagementComponent,
   },
   {
+    path: 'admin-event-management',
+    component: AdminEventManagementComponent,
+  },
+  {
     path: 'admin/dashboard',
+    component: AdminDashboardComponent,
+  },
+  {
+    path: 'admin-dashboard',
     component: AdminDashboardComponent,
   },
   {

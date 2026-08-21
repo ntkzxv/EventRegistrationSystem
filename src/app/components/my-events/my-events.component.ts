@@ -1,7 +1,7 @@
 import { Component, computed, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 export interface MyEventItem {
   id: string;
@@ -23,7 +23,7 @@ interface ToastState {
 @Component({
   selector: 'app-my-events',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterLink],
   templateUrl: './my-events.component.html',
   styleUrls: ['./my-events.component.css'],
 })
