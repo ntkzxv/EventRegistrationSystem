@@ -1,0 +1,359 @@
+<div class="admin-event-management">
+  <!-- ================= TOP NAV BAR ================= -->
+  <header class="top-nav-bar">
+    <div class="nav-left">
+      <div class="brand">
+        <div class="logo-box">
+          <div class="icon-container">
+            <svg class="calendar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 2V6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 2V6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 10H21" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <span class="brand-name">Admin Panel</span>
+      </div>
+
+      <nav class="nav-links" aria-label="Admin Navigation">
+        <div class="nav-link">
+          <button type="button" class="nav-link-btn active">
+            จัดการกิจกรรม
+          </button>
+        </div>
+        <div class="nav-link">
+          <button type="button" class="nav-link-btn" (click)="searchQuery.set('')">
+            สรุปผล
+          </button>
+        </div>
+      </nav>
+    </div>
+
+    <div class="nav-right">
+      <div class="user-profile-wrapper">
+        <button type="button" class="user-profile" (click)="toggleUserMenu()" aria-haspopup="true">
+          <div class="avatar">
+            <div class="icon-container">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <span class="user-name">ผู้ดูแลระบบ (Admin)</span>
+          <div class="icon-container chevron-icon" [class.rotated]="isUserMenuOpen()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
+
+        @if (isUserMenuOpen()) {
+          <div class="user-dropdown animate-scale-up" (click)="$event.stopPropagation()">
+            <div class="user-dropdown-header">
+              <p class="dropdown-user-name">ผู้ดูแลระบบ (Admin)</p>
+              <p class="dropdown-user-email">admin@eventhub.go.th</p>
+            </div>
+            <div class="dropdown-divider"></div>
+            <button type="button" class="dropdown-item" (click)="openAddEventModal(); closeUserMenu()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>เพิ่มกิจกรรมใหม่</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="main-content">
+    
+    <!-- Title & Action Row -->
+    <div class="title-action-row">
+      <div class="title-left">
+        <h1 class="page-title">จัดการกิจกรรม (Event Management)</h1>
+        <p class="page-subtitle">แก้ไข ลบ หรือดูผู้ลงทะเบียนเข้าร่วมแต่ละกิจกรรม</p>
+      </div>
+
+      <!-- + Add New Event Button -->
+      <button type="button" class="btn-add-event" (click)="openAddEventModal()">
+        <div class="icon-container">
+          <svg class="plus-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 5V19" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M5 12H19" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span class="btn-text">เพิ่มกิจกรรมใหม่</span>
+      </button>
+    </div>
+
+    <!-- Table Wrapper -->
+    <div class="table-wrapper">
+      <!-- Table Header -->
+      <div class="table-header">
+        <span class="th-col th-title">ชื่อกิจกรรม</span>
+        <span class="th-col th-date">วันที่จัดงาน</span>
+        <span class="th-col th-location">สถานที่</span>
+        <span class="th-col th-category">ประเภท</span>
+        <span class="th-col th-capacity">จำนวนผู้สมัคร / ที่นั่ง</span>
+        <span class="th-col th-status">สถานะ</span>
+        <span class="th-col th-actions">การจัดการ</span>
+      </div>
+
+      <!-- Events List (Rows & Expansion Panes) -->
+      @for (item of filteredEvents(); track item.id) {
+        <div class="row-and-expansion">
+          <!-- Main Event Table Row -->
+          <div 
+            class="table-row" 
+            [class.row-expanded]="expandedEventId() === item.id"
+            (click)="toggleExpand(item.id)"
+          >
+            <span class="td-col td-title">{{ item.title }}</span>
+            <span class="td-col td-date">{{ item.date }}</span>
+            <span class="td-col td-location">{{ item.location }}</span>
+            <span class="td-col td-category">{{ item.category }}</span>
+            
+            <span class="td-col td-capacity">
+              <strong>{{ item.registeredCount }}</strong> / {{ item.capacity }}
+            </span>
+
+            <div class="td-col td-status">
+              <div class="badge-column">
+                @if (item.status === 'เปิดรับ') {
+                  <span class="badge badge-open">เปิดรับ</span>
+                } @else if (item.status === 'เต็ม') {
+                  <span class="badge badge-full">เต็ม</span>
+                } @else {
+                  <span class="badge badge-closed">ปิดรับ</span>
+                }
+              </div>
+            </div>
+
+            <!-- Actions Column -->
+            <div class="td-col td-actions" (click)="$event.stopPropagation()">
+              <div class="actions-column">
+                <button 
+                  type="button" 
+                  class="btn-toggle-registrants"
+                  (click)="toggleExpand(item.id)"
+                >
+                  {{ expandedEventId() === item.id ? 'ปิดผู้ลงทะเบียน' : 'ดูผู้ลงทะเบียน' }}
+                </button>
+                <button 
+                  type="button" 
+                  class="btn-edit"
+                  (click)="openEditEventModal(item, $event)"
+                >
+                  แก้ไข
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expanded Registrants Pane (Shown when expanded) -->
+          @if (expandedEventId() === item.id) {
+            <div class="expanded-registrants-pane animate-fade-in">
+              <div class="pane-header">
+                <h3 class="pane-title">รายชื่อผู้ลงทะเบียนเข้าร่วมกิจกรรม: {{ item.title }}</h3>
+                <span class="badge badge-count">ผู้ลงทะเบียนทั้งหมด {{ item.registeredCount }} คน</span>
+              </div>
+
+              <!-- Registrant Sub-Table -->
+              <div class="registrant-table">
+                <div class="sub-header">
+                  <span class="sub-th-name">ชื่อ - นามสกุล</span>
+                  <span class="sub-th-email">อีเมล</span>
+                  <span class="sub-th-date">วันที่ลงทะเบียน</span>
+                  <span class="sub-th-status">สถานะการรับรอง</span>
+                </div>
+
+                @if (item.registrants.length > 0) {
+                  @for (reg of item.registrants; track reg.id; let last = $last) {
+                    <div class="sub-row" [class.no-border]="last">
+                      <span class="sub-td-name">{{ reg.name }}</span>
+                      <span class="sub-td-email">{{ reg.email }}</span>
+                      <span class="sub-td-date">{{ reg.registeredDate }}</span>
+                      <div class="sub-td-status">
+                        <div class="status-col">
+                          @if (reg.status === 'ยืนยันแล้ว') {
+                            <span class="badge badge-confirmed">ยืนยันแล้ว</span>
+                          } @else if (reg.status === 'รอดำเนินการ') {
+                            <span class="badge badge-pending">รอดำเนินการ</span>
+                          } @else {
+                            <span class="badge badge-cancelled">ยกเลิกแล้ว</span>
+                          }
+                        </div>
+                      </div>
+                    </div>
+                  }
+                } @else {
+                  <div class="sub-row-empty">
+                    <p class="empty-registrant-text">ยังไม่มีผู้ลงทะเบียนเข้าร่วมกิจกรรมนี้</p>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <p class="footer-text">© 2024 EventHub. ระบบลงทะเบียนกิจกรรมออนไลน์เพื่อประชาชน.</p>
+    <p class="footer-text">ความปลอดภัยและการจัดการข้อมูลเป็นไปตามมาตรฐานสากล</p>
+  </footer>
+
+  <!-- ================= ADD / EDIT EVENT MODAL ================= -->
+  @if (isEventModalOpen()) {
+    <div class="modal-backdrop" (click)="closeEventModal()">
+      <div class="event-modal-card animate-scale-up" (click)="$event.stopPropagation()">
+        <div class="modal-top-accent"></div>
+
+        <button type="button" class="modal-close-btn" (click)="closeEventModal()" aria-label="ปิดหน้าต่าง">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <h2 class="modal-title">
+          {{ modalMode() === 'add' ? 'เพิ่มกิจกรรมใหม่' : 'แก้ไขข้อมูลกิจกรรม' }}
+        </h2>
+
+        <form (submit)="$event.preventDefault(); saveEvent()" class="modal-form">
+          <div class="form-group">
+            <label class="form-label">ชื่อกิจกรรม *</label>
+            <input 
+              type="text" 
+              class="form-input" 
+              [ngModel]="formTitle()" 
+              (ngModelChange)="formTitle.set($event)"
+              name="title"
+              placeholder="ระบุชื่อกิจกรรม เช่น สัมมนา AI ในอนาคต"
+              required 
+            />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">วันที่จัดงาน *</label>
+              <input 
+                type="text" 
+                class="form-input" 
+                [ngModel]="formDate()" 
+                (ngModelChange)="formDate.set($event)"
+                name="date"
+                placeholder="เช่น 24 พ.ย. 2024" 
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">หมวดหมู่ *</label>
+              <select 
+                class="form-select" 
+                [ngModel]="formCategory()" 
+                (ngModelChange)="formCategory.set($event)"
+                name="category"
+              >
+                <option value="เทคโนโลยี">เทคโนโลยี</option>
+                <option value="การออกแบบ">การออกแบบ</option>
+                <option value="กีฬา">กีฬา</option>
+                <option value="ดนตรี">ดนตรี</option>
+                <option value="อาหารและเครื่องดื่ม">อาหารและเครื่องดื่ม</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">สถานที่จัดงาน *</label>
+            <input 
+              type="text" 
+              class="form-input" 
+              [ngModel]="formLocation()" 
+              (ngModelChange)="formLocation.set($event)"
+              name="location"
+              placeholder="เช่น True Digital Park, สวนลุมพินี"
+              required 
+            />
+          </div>
+
+          <div class="form-row-2">
+            <div class="form-group">
+              <label class="form-label">จำนวนที่นั่งทั้งหมด *</label>
+              <input 
+                type="number" 
+                class="form-input" 
+                [ngModel]="formCapacity()" 
+                (ngModelChange)="formCapacity.set($event)"
+                name="capacity"
+                min="1" 
+                required
+              />
+            </div>
+            <div class="form-group">
+              <label class="form-label">สถานะกิจกรรม</label>
+              <select 
+                class="form-select" 
+                [ngModel]="formStatus()" 
+                (ngModelChange)="formStatus.set($event)"
+                name="status"
+              >
+                <option value="เปิดรับ">เปิดรับ</option>
+                <option value="ปิดรับ">ปิดรับ</option>
+                <option value="เต็ม">เต็ม</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-cancel-modal" (click)="closeEventModal()">
+              ยกเลิก
+            </button>
+            <button type="submit" class="btn-submit-modal">
+              {{ modalMode() === 'add' ? 'บันทึกและสร้างกิจกรรม' : 'บันทึกการแก้ไข' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ================= TOAST NOTIFICATION ================= -->
+  @if (toast().show) {
+    <aside 
+      class="toast-notification animate-toast-slide" 
+      [ngClass]="'toast-' + toast().type"
+      role="status" 
+      aria-live="polite"
+    >
+      <div class="toast-icon">
+        @if (toast().type === 'success') {
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        } @else if (toast().type === 'error') {
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="15" y1="9" x2="9" y2="15"></line>
+            <line x1="9" y1="9" x2="15" y2="15"></line>
+          </svg>
+        } @else {
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        }
+      </div>
+      <p class="toast-text">{{ toast().message }}</p>
+    </aside>
+  }
+</div>
