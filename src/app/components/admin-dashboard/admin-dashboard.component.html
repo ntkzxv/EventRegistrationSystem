@@ -1,0 +1,224 @@
+<div class="admin-dashboard">
+  <!-- ================= TOP NAV BAR ================= -->
+  <header class="top-nav-bar">
+    <div class="nav-left">
+      <div class="brand">
+        <div class="logo-box">
+          <div class="icon-container">
+            <svg class="calendar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M19 4H5C3.89543 4 3 4.89543 3 6V20C3 21.1046 3.89543 22 5 22H19C20.1046 22 21 21.1046 21 20V6C21 4.89543 20.1046 4 19 4Z" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 2V6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 2V6" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M3 10H21" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        <span class="brand-name">Admin Panel</span>
+      </div>
+
+      <nav class="nav-links" aria-label="Admin Navigation">
+        <div class="nav-link">
+          <a routerLink="/admin/events" class="nav-link-btn">
+            จัดการกิจกรรม
+          </a>
+        </div>
+        <div class="nav-link">
+          <a routerLink="/admin/dashboard" class="nav-link-btn active">
+            สรุปผล
+          </a>
+        </div>
+      </nav>
+    </div>
+
+    <div class="nav-right">
+      <div class="user-profile-wrapper">
+        <button type="button" class="user-profile" (click)="toggleUserMenu()" aria-haspopup="true">
+          <div class="avatar">
+            <div class="icon-container">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <span class="user-name">ผู้ดูแลระบบ (Admin)</span>
+          <div class="icon-container chevron-icon" [class.rotated]="isUserMenuOpen()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4B5563" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+        </button>
+
+        @if (isUserMenuOpen()) {
+          <div class="user-dropdown animate-scale-up" (click)="$event.stopPropagation()">
+            <div class="user-dropdown-header">
+              <p class="dropdown-user-name">ผู้ดูแลระบบ (Admin)</p>
+              <p class="dropdown-user-email">admin@eventhub.go.th</p>
+            </div>
+            <div class="dropdown-divider"></div>
+            <a routerLink="/admin/events" class="dropdown-item" (click)="closeUserMenu()" style="text-decoration: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>จัดการกิจกรรม</span>
+            </a>
+            <a routerLink="/my-events" class="dropdown-item" (click)="closeUserMenu()" style="text-decoration: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <span>ไปยังหน้าผู้ใช้ทั่วไป</span>
+            </a>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="main-content">
+    
+    <!-- Summary Title Section -->
+    <header class="summary-title-section">
+      <h1 class="summary-heading">สรุปผลกิจกรรม (Event Dashboard)</h1>
+      <p class="summary-subheading">วิเคราะห์ข้อมูลการสมัครและรายงานภาพรวมระบบ</p>
+    </header>
+
+    <!-- KPI Metric Cards Frame -->
+    <section class="kpi-frame" aria-label="Key Performance Indicators">
+      <!-- Card 1: ผู้ลงทะเบียนทั้งหมด -->
+      <div class="kpi-card">
+        <span class="kpi-label">ผู้ลงทะเบียนทั้งหมด</span>
+        <strong class="kpi-value">{{ totalRegistrations() }} คน</strong>
+      </div>
+
+      <!-- Card 2: จำนวนกิจกรรมทั้งหมด -->
+      <div class="kpi-card">
+        <span class="kpi-label">จำนวนกิจกรรมทั้งหมด</span>
+        <strong class="kpi-value">{{ totalEvents() }} กิจกรรม</strong>
+      </div>
+
+      <!-- Card 3: กิจกรรมที่กำลังเปิดรับ -->
+      <div class="kpi-card">
+        <span class="kpi-label">กิจกรรมที่กำลังเปิดรับ</span>
+        <strong class="kpi-value">{{ activeEvents() }} กิจกรรม</strong>
+      </div>
+
+      <!-- Card 4: กิจกรรมที่ปิดรับแล้ว -->
+      <div class="kpi-card">
+        <span class="kpi-label">กิจกรรมที่ปิดรับแล้ว</span>
+        <strong class="kpi-value">{{ closedEvents() }} กิจกรรม</strong>
+      </div>
+    </section>
+
+    <!-- Recent Registrations Section -->
+    <section class="recent-registrations-section" aria-label="Recent Registrations">
+      <div class="section-header-bar">
+        <h2 class="section-title">รายการลงทะเบียนล่าสุด</h2>
+
+        <!-- Controls: Search, Filter & Export -->
+        <div class="table-controls">
+          <div class="table-search-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input 
+              type="text" 
+              class="table-search-input"
+              [ngModel]="searchQuery()" 
+              (ngModelChange)="searchQuery.set($event)"
+              placeholder="ค้นหาชื่อ หรือกิจกรรม..." 
+            />
+          </div>
+
+          <div class="status-filter-pills">
+            @for (status of ['ทั้งหมด', 'สำเร็จ', 'รอดำเนินการ', 'ยกเลิกแล้ว']; track status) {
+              <button 
+                type="button" 
+                class="status-pill-btn" 
+                [class.active]="selectedStatus() === status"
+                (click)="setStatusFilter(status)"
+              >
+                {{ status }}
+              </button>
+            }
+          </div>
+
+          <button type="button" class="export-btn" (click)="exportCSV()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>ส่งออก CSV</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Wrapper matching Figma Structure -->
+      <div class="table-wrapper">
+        <!-- Table Header -->
+        <div class="table-header">
+          <span class="th-col th-name">ชื่อผู้ลงทะเบียน</span>
+          <span class="th-col th-event">เข้าร่วมกิจกรรม</span>
+          <span class="th-col th-date">วันที่ลงทะเบียนสมัคร</span>
+          <span class="th-col th-status">สถานะ</span>
+        </div>
+
+        <!-- Table Rows matching Figma -->
+        @if (filteredRegistrations().length > 0) {
+          @for (row of filteredRegistrations(); track row.id; let last = $last) {
+            <div class="table-row" [class.no-border]="last">
+              <span class="td-col td-name">{{ row.name }}</span>
+              <span class="td-col td-event">{{ row.eventName }}</span>
+              <span class="td-col td-date">{{ row.registeredDate }}</span>
+              
+              <!-- Status Column with Badge -->
+              <div class="status-column">
+                @if (row.status === 'สำเร็จ') {
+                  <span class="badge badge-success">สำเร็จ</span>
+                } @else if (row.status === 'รอดำเนินการ') {
+                  <span class="badge badge-pending">รอดำเนินการ</span>
+                } @else {
+                  <span class="badge badge-cancelled">ยกเลิกแล้ว</span>
+                }
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="table-empty-row">
+            <p class="empty-table-text">ไม่พบข้อมูลการลงทะเบียนตามเงื่อนไข</p>
+          </div>
+        }
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+    <p class="footer-text">© 2024 EventHub. ระบบลงทะเบียนกิจกรรมออนไลน์เพื่อประชาชน.</p>
+    <p class="footer-text">ความปลอดภัยและการจัดการข้อมูลเป็นไปตามมาตรฐานสากล</p>
+  </footer>
+
+  <!-- ================= TOAST NOTIFICATION ================= -->
+  @if (toast().show) {
+    <aside 
+      class="toast-notification animate-toast-slide" 
+      [ngClass]="'toast-' + toast().type"
+      role="status" 
+      aria-live="polite"
+    >
+      <div class="toast-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <p class="toast-text">{{ toast().message }}</p>
+    </aside>
+  }
+</div>
