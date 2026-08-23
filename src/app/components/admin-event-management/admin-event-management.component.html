@@ -161,8 +161,8 @@
 
   <!-- ================= ADD / EDIT EVENT MODAL ================= -->
   @if (isEventModalOpen()) {
-    <div class="modal-backdrop" (click)="closeEventModal()">
-      <div class="event-modal-card animate-scale-up" (click)="$event.stopPropagation()">
+    <div class="modal-backdrop">
+      <div class="event-modal-card animate-scale-up">
         <div class="modal-top-accent"></div>
 
         <button type="button" class="modal-close-btn" (click)="closeEventModal()" aria-label="ปิดหน้าต่าง">
