@@ -1,0 +1,218 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "name": "สมชาย รักดี",
+      "email": "somchai.r@email.com",
+      "password": "$2a$10$V5JsjL8.iFLq6LApRnCZo.3f4AslfHrZgO8MyG8n8FK.7YRPX0BJe",
+      "role": "user"
+    },
+    {
+      "id": 2,
+      "name": "Admin",
+      "email": "admin@eventhub.go.th",
+      "password": "$2a$10$0T88cR/IcN5feegzmgymQu0cLaD4Ex/.ZJ8a7aB1pi8HbY1YzXN.i",
+      "role": "admin"
+    },
+    {
+      "id": 3,
+      "name": "ทดสอบ ระบบ",
+      "email": "test.user@email.com",
+      "password": "$2a$10$roAvplcfqw6JNyvjzF27s.QNRruenOBDOvk/ViDTm31cIse4j8Ijm",
+      "role": "user"
+    }
+  ],
+  "event_types": [
+    {
+      "id": 1,
+      "name": "เทคโนโลยี",
+      "badge_color": "blue"
+    },
+    {
+      "id": 2,
+      "name": "การออกแบบ",
+      "badge_color": "purple"
+    },
+    {
+      "id": 3,
+      "name": "อาหารและเครื่องดื่ม",
+      "badge_color": "amber"
+    },
+    {
+      "id": 4,
+      "name": "สุขภาพและกีฬา",
+      "badge_color": "green"
+    },
+    {
+      "id": 5,
+      "name": "กีฬา",
+      "badge_color": "red"
+    },
+    {
+      "id": 6,
+      "name": "ดนตรี",
+      "badge_color": "pink"
+    }
+  ],
+  "venues": [
+    {
+      "id": 1,
+      "name": "True Digital Park",
+      "address": "101 ถ.สุขุมวิท แขวงบางจาก เขตพระโขนง กรุงเทพมหานคร",
+      "capacity": 500
+    },
+    {
+      "id": 2,
+      "name": "อาคารวิศวกรรม มหาวิทยาลัยชื่อดัง",
+      "address": "254 ถ.พญาไท แขวงวังใหม่ เขตปทุมวัน กรุงเทพมหานคร",
+      "capacity": 200
+    },
+    {
+      "id": 3,
+      "name": "BITEC Bangna",
+      "address": "88 ถ.เทพรัตน แขวงบางนาใต้ เขตบางนา กรุงเทพมหานคร",
+      "capacity": 2000
+    },
+    {
+      "id": 4,
+      "name": "Samyan Mitrtown Hall",
+      "address": "944 ถ.พระราม 4 แขวงวังใหม่ เขตปทุมวัน กรุงเทพมหานคร",
+      "capacity": 500
+    },
+    {
+      "id": 5,
+      "name": "Siam Square One",
+      "address": "388 ถ.พระราม 1 แขวงปทุมวัน เขตปทุมวัน กรุงเทพมหานคร",
+      "capacity": 1200
+    },
+    {
+      "id": 6,
+      "name": "สวนลุมพินี",
+      "address": "ถ.วิทยุ แขวงลุมพินี เขตปทุมวัน กรุงเทพมหานคร",
+      "capacity": 1000
+    }
+  ],
+  "events": [
+    {
+      "id": 1,
+      "name": "สัมมนา AI ในอนาคต",
+      "description": "ร่วมเจาะลึกนวัตกรรมปัญญาประดิษฐ์ (AI & LLM) กับผู้เชี่ยวชาญระดับแนวหน้าของไทย ทำความเข้าใจแนวโน้มและการประยุกต์ใช้ AI ในภาคธุรกิจและชีวิตประจำวัน",
+      "event_type_id": 1,
+      "venue_id": 1,
+      "organizer_name": "สมาคมนวัตกรรมและเทคโนโลยีไทย (TITA)",
+      "organizer_contact_email": "contact@tita.or.th",
+      "organizer_contact_phone": "02-123-4567",
+      "start_date": "2024-11-24T09:00:00",
+      "end_date": "2024-11-24T16:30:00",
+      "max_seats": 120,
+      "status": "open"
+    },
+    {
+      "id": 2,
+      "name": "Workshop UX/UI Design",
+      "description": "เวิร์กช็อปเข้มข้นที่จะพาคุณฝึกฝนการออกแบบ User Experience และ User Interface สำหรับแอปพลิเคชันยุคใหม่ พร้อมการลงมือปฏิบัติจริงด้วย Figma",
+      "event_type_id": 2,
+      "venue_id": 2,
+      "organizer_name": "ชมรมนักออกแบบผลิตภัณฑ์ดิจิทัล",
+      "organizer_contact_email": "hello@uxuidesign.co.th",
+      "organizer_contact_phone": "02-234-5678",
+      "start_date": "2024-11-30T13:00:00",
+      "end_date": "2024-11-30T17:00:00",
+      "max_seats": 40,
+      "status": "open"
+    },
+    {
+      "id": 3,
+      "name": "Thailand Tech Conference 2024",
+      "description": "งานประชุมเทคโนโลยีที่ใหญ่ที่สุดแห่งปี รวบรวมหัวข้อด้าน Cloud, DevOps, Cyber Security และ Software Engineering จากวิทยากรระดับ Global",
+      "event_type_id": 1,
+      "venue_id": 3,
+      "organizer_name": "สมาคมอุตสาหกรรมเทคโนโลยีสารสนเทศไทย",
+      "organizer_contact_email": "info@thailandtechconf.com",
+      "organizer_contact_phone": "02-345-6789",
+      "start_date": "2024-12-15T09:00:00",
+      "end_date": "2024-12-15T18:00:00",
+      "max_seats": 500,
+      "status": "open"
+    },
+    {
+      "id": 4,
+      "name": "Creative Coding & Design Summit",
+      "description": "การพบปะของนักออกแบบและนักพัฒนาที่สร้างสรรค์งาน Interactive Art, Generative Design และ Creative Technology",
+      "event_type_id": 2,
+      "venue_id": 4,
+      "organizer_name": "กลุ่ม Creative Technologist Thailand",
+      "organizer_contact_email": "team@creativecoding.th",
+      "organizer_contact_phone": "02-456-7890",
+      "start_date": "2024-12-20T10:00:00",
+      "end_date": "2024-12-20T16:00:00",
+      "max_seats": 200,
+      "status": "open"
+    },
+    {
+      "id": 5,
+      "name": "Thai Food & Gastronomy Expo",
+      "description": "สัมผัสวัฒนธรรมอาหารไทยร่วมสมัย เทคนิคการปรุงอาหาร และการต่อยอดวัตถุดิบท้องถิ่นสู่มาตรฐานสากล พร้อมชิมอาหารจากเชฟชื่อดัง",
+      "event_type_id": 3,
+      "venue_id": 5,
+      "organizer_name": "สมาคมผู้ประกอบการอาหารไทย",
+      "organizer_contact_email": "contact@thaifoodexpo.com",
+      "organizer_contact_phone": "02-567-8901",
+      "start_date": "2025-01-05T11:00:00",
+      "end_date": "2025-01-05T20:00:00",
+      "max_seats": 1000,
+      "status": "open"
+    },
+    {
+      "id": 6,
+      "name": "Bangkok City Marathon & Wellness",
+      "description": "กิจกรรมวิ่งเพื่อสุขภาพใจกลางเมือง ส่งเสริมการออกกำลังกาย พร้อมจุดบริการสุขภาพและให้คำปรึกษาด้านโภชนาการฟรี",
+      "event_type_id": 4,
+      "venue_id": 6,
+      "organizer_name": "สำนักงานกองทุนสนับสนุนการสร้างเสริมสุขภาพ",
+      "organizer_contact_email": "wellness@bangkokmarathon.th",
+      "organizer_contact_phone": "02-678-9012",
+      "start_date": "2025-01-18T05:00:00",
+      "end_date": "2025-01-18T10:00:00",
+      "max_seats": 800,
+      "status": "open"
+    }
+  ],
+  "registrations": [
+    {
+      "id": 1,
+      "event_id": 1,
+      "user_id": 1,
+      "status": "confirmed",
+      "registered_at": "2024-11-01T10:00:00.000Z"
+    },
+    {
+      "id": 2,
+      "event_id": 2,
+      "user_id": 1,
+      "status": "cancelled",
+      "registered_at": "2026-08-24T08:50:36.448Z"
+    },
+    {
+      "id": 3,
+      "event_id": 3,
+      "user_id": 1,
+      "status": "cancelled",
+      "registered_at": "2026-08-24T09:32:20.583Z"
+    },
+    {
+      "id": 4,
+      "event_id": 3,
+      "user_id": 1,
+      "status": "confirmed",
+      "registered_at": "2026-08-24T10:06:34.327Z"
+    }
+  ],
+  "_meta": {
+    "nextUserId": 6,
+    "nextEventId": 8,
+    "nextVenueId": 8,
+    "nextEventTypeId": 7,
+    "nextRegistrationId": 5
+  }
+}
