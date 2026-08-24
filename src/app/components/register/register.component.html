@@ -20,6 +20,16 @@
       <p class="header-desc">สมัครสมาชิกเพื่อจัดการและลงทะเบียนกิจกรรมของคุณ</p>
     </div>
 
+    <!-- Tab Switcher -->
+    <div class="tab-switcher">
+      <a routerLink="/login" class="tab-login" style="text-decoration: none;">
+        <span class="tab-label">เข้าสู่ระบบ</span>
+      </a>
+      <div class="tab-register active">
+        <span class="tab-label">สมัครสมาชิก</span>
+      </div>
+    </div>
+
     <!-- Error Alert Message -->
     @if (errorMessage) {
       <div class="alert-box alert-error">
@@ -184,9 +194,9 @@
         <div class="back-home-row">
           <div class="login-prompt-group">
             <span class="has-account-text">มีบัญชีผู้ใช้อยู่แล้ว?</span>
-            <button type="button" class="login-link-btn" (click)="onLoginClick()">
+            <a routerLink="/login" class="login-link-btn" style="text-decoration: underline; cursor: pointer;">
               เข้าสู่ระบบ
-            </button>
+            </a>
           </div>
         </div>
       </div>

@@ -43,9 +43,7 @@
 
 
     <!-- ================= TABS ================= -->
-
     <div class="auth-tabs">
-
       <button
         type="button"
         class="tab-button active"
@@ -53,14 +51,13 @@
         เข้าสู่ระบบ
       </button>
 
-      <button
-        type="button"
+      <a
+        routerLink="/register"
         class="tab-button"
-        (click)="goToRegister()"
+        style="text-decoration: none; display: flex; align-items: center; justify-content: center;"
       >
         สมัครสมาชิก
-      </button>
-
+      </a>
     </div>
 
 
@@ -186,7 +183,6 @@
 
 
       <!-- LOGIN BUTTON -->
-
       <button
         type="submit"
         class="primary-button"
@@ -194,8 +190,13 @@
         เข้าสู่ระบบ
       </button>
 
+      <!-- REGISTER LINK PROMPT -->
+      <div class="register-prompt-row">
+        <span class="no-account-text">ยังไม่มีบัญชีผู้ใช้?</span>
+        <a routerLink="/register" class="register-link-btn">
+          สมัครสมาชิก
+        </a>
+      </div>
     </form>
-
   </div>
-
 </div>
