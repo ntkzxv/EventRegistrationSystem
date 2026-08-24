@@ -1,0 +1,344 @@
+<div class="event-detail-page">
+
+  <!-- ================= NAVBAR ================= -->
+  <app-navbar
+    mode="user"
+    activeTab="events"
+    [searchQuery]="searchQuery()"
+    (searchQueryChange)="searchQuery.set($event)"
+  />
+
+
+  <!-- ================= MAIN ================= -->
+  <main class="main-content">
+
+    <!-- Back -->
+    <button
+      type="button"
+      class="back-button"
+      (click)="goBack()"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+
+      กลับไปหน้ากิจกรรม
+    </button>
+
+
+    @if (event(); as item) {
+
+      <!-- ================= EVENT CARD ================= -->
+      <section class="event-card">
+
+        <!-- สีตามประเภท -->
+        <div
+          class="event-color-line"
+          [style.backgroundColor]="getCategoryColor(item.category)"
+        ></div>
+
+
+        <!-- ================= CONTENT ================= -->
+        <div class="event-content">
+
+          <!-- Heading -->
+          <div class="event-heading">
+
+            <span
+              class="detail-category-badge"
+              [style.color]="getCategoryColor(item.category)"
+              [style.borderColor]="getCategoryColor(item.category)"
+            >
+              {{ item.category }}
+            </span>
+
+            <h1 class="event-title">
+              {{ item.title }}
+            </h1>
+
+            <p class="event-description">
+              {{ item.description }}
+            </p>
+
+          </div>
+
+
+          <!-- ================= INFO ================= -->
+          <div class="info-grid">
+
+            <!-- Date -->
+            <div class="info-box">
+
+              <div class="info-icon">
+                <svg
+                  width="21"
+                  height="21"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#2563EB"
+                  stroke-width="2"
+                >
+                  <rect
+                    x="3"
+                    y="4"
+                    width="18"
+                    height="18"
+                    rx="2"
+                  ></rect>
+
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
+
+              <div>
+                <span class="info-label">
+                  วันที่และเวลา
+                </span>
+
+                <strong class="info-value">
+                  {{ item.date }}
+                </strong>
+              </div>
+
+            </div>
+
+
+            <!-- Location -->
+            <div class="info-box">
+
+              <div class="info-icon">
+                <svg
+                  width="21"
+                  height="21"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#2563EB"
+                  stroke-width="2"
+                >
+                  <path
+                    d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 1 1 18 0z"
+                  ></path>
+
+                  <circle
+                    cx="12"
+                    cy="10"
+                    r="3"
+                  ></circle>
+                </svg>
+              </div>
+
+              <div>
+                <span class="info-label">
+                  สถานที่
+                </span>
+
+                <strong class="info-value">
+                  {{ item.location }}
+                </strong>
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ================= SEATS ================= -->
+          <div class="seat-section">
+
+            <div class="seat-header">
+
+              <div>
+                <h3>จำนวนผู้เข้าร่วม</h3>
+
+                <p>
+                  {{ item.registeredCount }}
+                  จาก
+                  {{ item.capacity }}
+                  คน
+                </p>
+              </div>
+
+
+              @if (isFull(item)) {
+
+                <span class="full-badge">
+                  เต็มแล้ว
+                </span>
+
+              } @else {
+
+                <span class="available-badge">
+                  เหลือ {{ getAvailableSeats(item) }} ที่นั่ง
+                </span>
+
+              }
+
+            </div>
+
+
+            <!-- Progress -->
+            <div class="progress-bar">
+
+              <div
+                class="progress-value"
+                [class.full]="isFull(item)"
+                [style.width.%]="getPercentage(item)"
+              ></div>
+
+            </div>
+
+          </div>
+
+
+          <!-- ================= SUCCESS ================= -->
+          @if (successMessage()) {
+
+            <div class="success-message">
+
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="#15803D"
+                stroke-width="2.5"
+              >
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+
+              {{ successMessage() }}
+
+            </div>
+
+          }
+
+
+          <!-- ================= ACTION ================= -->
+          <div class="action-section">
+
+            <!-- PENDING -->
+            @if (registrationStatus() === 'PENDING') {
+
+              <div class="status-box pending-box">
+
+                <div>
+                  <strong>รอดำเนินการ</strong>
+
+                  <p>
+                    ส่งคำขอเข้าร่วมกิจกรรมแล้ว กรุณารอการยืนยัน
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="goToMyEvents()"
+                >
+                  ไปที่กิจกรรมของฉัน
+                </button>
+
+              </div>
+
+            }
+
+            <!-- CONFIRMED -->
+            @else if (registrationStatus() === 'CONFIRMED') {
+
+              <div class="status-box confirmed-box">
+
+                <div>
+                  <strong>ยืนยันการเข้าร่วมแล้ว</strong>
+
+                  <p>
+                    คุณได้รับการยืนยันให้เข้าร่วมกิจกรรมนี้แล้ว
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="goToMyEvents()"
+                >
+                  ไปที่กิจกรรมของฉัน
+                </button>
+
+              </div>
+
+            }
+
+            <!-- FULL -->
+            @else if (isFull(item)) {
+
+              <button
+                type="button"
+                class="register-button disabled"
+                disabled
+              >
+                กิจกรรมเต็มแล้ว
+              </button>
+
+            }
+
+            <!-- CANCELLED -->
+            @else if (registrationStatus() === 'CANCELLED') {
+
+              <button
+                type="button"
+                class="register-button"
+                (click)="registerEvent()"
+              >
+                สมัครเข้าร่วมอีกครั้ง
+              </button>
+
+            }
+
+            <!-- NOT REGISTERED -->
+            @else {
+
+              <button
+                type="button"
+                class="register-button"
+                (click)="registerEvent()"
+              >
+                สมัครเข้าร่วมกิจกรรม
+              </button>
+
+            }
+
+          </div>
+
+        </div>
+        <!-- END CONTENT -->
+
+      </section>
+
+    }
+
+  </main>
+
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="footer">
+
+    <p>
+      © 2024 EventHub.
+      ระบบลงทะเบียนกิจกรรมออนไลน์เพื่อประชาชน.
+    </p>
+
+    <p>
+      ความปลอดภัยและการจัดการข้อมูลเป็นไปตามมาตรฐานสากล
+    </p>
+
+  </footer>
+
+</div>
