@@ -1,6 +1,13 @@
 import { Injectable, signal } from "@angular/core";
 import { Event, Registration } from "../models/event.model";
 
+const EVENT_TYPE_COLORS: Record<string, string> = {
+  'เทคโนโลยี': '#2563EB',
+  'การออกแบบ': '#8B5CF6',
+  'อาหารและเครื่องดื่ม': '#F59E0B',
+  'สุขภาพและกีฬา': '#10B981',
+};
+
 @Injectable({
   providedIn: "root",
 })
@@ -12,7 +19,6 @@ export class EventService {
       description: "ร่วมเจาะลึกนวัตกรรมปัญญาประดิษฐ์ (AI & LLM) กับผู้เชี่ยวชาญระดับแนวหน้าของไทย ทำความเข้าใจแนวโน้มและการประยุกต์ใช้ AI ในภาคธุรกิจและชีวิตประจำวัน",
       date: "24 พ.ย. 2024 • 09:00 - 16:30 น.",
       location: "ห้องประชุมใหญ่ A, True Digital Park",
-      imageUrl: "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=1470&auto=format&fit=crop",
       capacity: 120,
       registeredCount: 108,
       category: "เทคโนโลยี",
@@ -23,7 +29,6 @@ export class EventService {
       description: "เวิร์กช็อปเข้มข้นที่จะพาคุณฝึกฝนการออกแบบ User Experience และ User Interface สำหรับแอปพลิเคชันยุคใหม่ พร้อมการลงมือปฏิบัติจริงด้วย Figma",
       date: "30 พ.ย. 2024 • 13:00 - 17:00 น.",
       location: "อาคารวิศวกรรม, มหาวิทยาลัยชื่อดัง",
-      imageUrl: "https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?q=80&w=1470&auto=format&fit=crop",
       capacity: 40,
       registeredCount: 35,
       category: "การออกแบบ",
@@ -34,7 +39,6 @@ export class EventService {
       description: "งานประชุมเทคโนโลยีที่ใหญ่ที่สุดแห่งปี รวบรวมหัวข้อด้าน Cloud, DevOps, Cyber Security และ Software Engineering จากวิทยากรระดับ Global",
       date: "15 ธ.ค. 2024 • 09:00 - 18:00 น.",
       location: "BITEC Bangna, กรุงเทพมหานคร",
-      imageUrl: "https://images.unsplash.com/photo-1540575861501-7ad0582373f2?q=80&w=1470&auto=format&fit=crop",
       capacity: 500,
       registeredCount: 342,
       category: "เทคโนโลยี",
@@ -45,7 +49,6 @@ export class EventService {
       description: "การพบปะของนักออกแบบและนักพัฒนาที่สร้างสรรค์งาน Interactive Art, Generative Design และ Creative Technology",
       date: "20 ธ.ค. 2024 • 10:00 - 16:00 น.",
       location: "Samyan Mitrtown Hall, กรุงเทพมหานคร",
-      imageUrl: "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1470&auto=format&fit=crop",
       capacity: 200,
       registeredCount: 180,
       category: "การออกแบบ",
@@ -56,7 +59,6 @@ export class EventService {
       description: "สัมผัสวัฒนธรรมอาหารไทยร่วมสมัย เทคนิคการปรุงอาหาร และการต่อยอดวัตถุดิบท้องถิ่นสู่มาตรฐานสากล พร้อมชิมอาหารจากเชฟชื่อดัง",
       date: "5 ม.ค. 2025 • 11:00 - 20:00 น.",
       location: "Siam Square One, กรุงเทพมหานคร",
-      imageUrl: "https://images.unsplash.com/photo-1552611052-33e04de081de?q=80&w=1528&auto=format&fit=crop",
       capacity: 1000,
       registeredCount: 850,
       category: "อาหารและเครื่องดื่ม",
@@ -67,13 +69,14 @@ export class EventService {
       description: "กิจกรรมวิ่งเพื่อสุขภาพใจกลางเมือง ส่งเสริมการออกกำลังกาย พร้อมจุดบริการสุขภาพและให้คำปรึกษาด้านโภชนาการฟรี",
       date: "18 ม.ค. 2025 • 05:00 - 10:00 น.",
       location: "สวนลุมพินี, กรุงเทพมหานคร",
-      imageUrl: "https://images.unsplash.com/photo-1459749411177-042180ceea72?q=80&w=1470&auto=format&fit=crop",
       capacity: 800,
       registeredCount: 720,
       category: "สุขภาพและกีฬา",
     },
   ]);
-
+  getCategoryColor(category: string): string {
+  return EVENT_TYPE_COLORS[category] ?? '#6B7280';
+  }
   private readonly registrations = signal<Registration[]>([
     {
       id: "reg-demo-1",
@@ -81,6 +84,7 @@ export class EventService {
       userName: "สมชาย รักดี",
       userEmail: "somchai.r@email.com",
       registrationDate: "2024-11-01T10:00:00.000Z",
+      status: "CONFIRMED",
     }
   ]);
 
@@ -95,16 +99,21 @@ export class EventService {
   getEventById(id: string) {
     return this.events().find((e) => e.id === id);
   }
-
+  getRegistrationByEventId(eventId: string) {
+  return [...this.registrations()]
+    .reverse()
+    .find((r) => r.eventId === eventId);
+  }
   isEventRegistered(eventId: string): boolean {
     return this.registrations().some((r) => r.eventId === eventId);
   }
 
-  registerForEvent(registration: Omit<Registration, "id" | "registrationDate">) {
+  registerForEvent(registration: Omit<Registration, "id" | "registrationDate"| "status">) {
     const newRegistration: Registration = {
       ...registration,
       id: Math.random().toString(36).substring(2, 9),
       registrationDate: new Date().toISOString(),
+      status: "PENDING",
     };
 
     this.registrations.update((prev) => [...prev, newRegistration]);
@@ -122,12 +131,42 @@ export class EventService {
   }
 
   cancelRegistration(eventId: string) {
-    this.registrations.update((prev) => prev.filter((r) => r.eventId !== eventId));
-    this.events.update((prev) => 
-      prev.map((e) => 
-        e.id === eventId 
-          ? { ...e, registeredCount: Math.max(0, e.registeredCount - 1) } 
-          : e
+
+    const registration = this.registrations().find(
+      (r) =>
+        r.eventId === eventId &&
+        r.status !== 'CANCELLED'
+    );
+
+    if (!registration) {
+      return;
+    }
+
+    // เปลี่ยนสถานะเป็น CANCELLED
+    // ไม่ลบ Registration
+    this.registrations.update((prev) =>
+      prev.map((r) =>
+        r.id === registration.id
+          ? {
+              ...r,
+              status: 'CANCELLED'
+            }
+          : r
+      )
+    );
+
+    // คืนที่นั่ง
+    this.events.update((prev) =>
+      prev.map((event) =>
+        event.id === eventId
+          ? {
+              ...event,
+              registeredCount: Math.max(
+                0,
+                event.registeredCount - 1
+              )
+            }
+          : event
       )
     );
   }

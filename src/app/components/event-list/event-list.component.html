@@ -1,0 +1,290 @@
+<div class="event-list-page">
+
+  <!-- ================= NAVBAR ================= -->
+  <app-navbar
+    mode="user"
+    activeTab="events"
+    [searchQuery]="searchQuery()"
+    (searchQueryChange)="searchQuery.set($event)"
+  />
+
+  <!-- ================= MAIN ================= -->
+  <main class="main-content">
+
+    <!-- Header -->
+    <div class="page-header">
+      <div>
+        <h1 class="page-title">กิจกรรมทั้งหมด</h1>
+
+        <p class="page-subtitle">
+          ค้นหาและสมัครเข้าร่วมกิจกรรมที่คุณสนใจ
+        </p>
+      </div>
+    </div>
+
+
+    <!-- Category Filter -->
+    <div class="category-filter">
+
+      @for (category of categories(); track category) {
+
+        <button
+          type="button"
+          class="category-btn"
+          [class.active]="selectedCategory() === category"
+          [style.--category-color]="getCategoryColor(category)"
+          (click)="setCategory(category)"
+        >
+          {{ category }}
+        </button>
+
+      }
+
+    </div>
+
+
+    <!-- ================= EVENT GRID ================= -->
+
+    @if (filteredEvents().length > 0) {
+
+      <div class="event-grid">
+
+        @for (event of filteredEvents(); track event.id) {
+
+          <article class="event-card">
+
+            <div
+              class="event-color-line"
+              [style.backgroundColor]="getCategoryColor(event.category)"
+            ></div>
+
+            <div class="event-content">
+
+              <span
+                class="category-badge"
+                [style.color]="getCategoryColor(event.category)"
+                [style.borderColor]="getCategoryColor(event.category)"
+              >
+                {{ event.category }}
+              </span>
+
+              <h2
+                class="event-title"
+                (click)="openEventDetail(event)"
+              >
+                {{ event.title }}
+              </h2>
+
+              <p class="event-description">
+                {{ event.description }}
+              </p>
+
+
+              <!-- Info -->
+
+              <div class="event-info">
+
+                <!-- Date -->
+                <div class="info-row">
+
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#6B7280"
+                    stroke-width="2"
+                  >
+                    <rect
+                      x="3"
+                      y="4"
+                      width="18"
+                      height="18"
+                      rx="2"
+                    ></rect>
+
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+
+                  </svg>
+
+                  <span>{{ event.date }}</span>
+
+                </div>
+
+
+                <!-- Location -->
+                <div class="info-row">
+
+                  <svg
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#6B7280"
+                    stroke-width="2"
+                  >
+                    <path
+                      d="M21 10c0 7-9 12-9 12S3 17 3 10a9 9 0 1 1 18 0z"
+                    ></path>
+
+                    <circle cx="12" cy="10" r="3"></circle>
+
+                  </svg>
+
+                  <span>{{ event.location }}</span>
+
+                </div>
+
+              </div>
+
+
+              <!-- Seats -->
+              <div class="seat-section">
+
+                <div class="seat-row">
+
+                  <span class="seat-label">
+                    จำนวนผู้สมัคร
+                  </span>
+
+                  @if (isFull(event)) {
+
+                    <span class="seat-full">
+                      เต็มแล้ว
+                    </span>
+
+                  } @else {
+
+                    <span class="seat-count">
+                      {{ event.registeredCount }}
+                      /
+                      {{ event.capacity }}
+                    </span>
+
+                  }
+
+                </div>
+
+
+                <!-- Progress Bar -->
+                <div class="seat-progress">
+
+                  <div
+                    class="seat-progress-value"
+                    [class.full]="isFull(event)"
+                    [style.width.%]="
+                      (event.registeredCount / event.capacity) * 100
+                    "
+                  >
+                  </div>
+
+                </div>
+
+
+                @if (!isFull(event)) {
+
+                  <span class="available-seat">
+
+                    เหลือ
+                    {{ getAvailableSeats(event) }}
+                    ที่นั่ง
+
+                  </span>
+
+                }
+
+              </div>
+
+
+              <!-- Button -->
+              <button
+                type="button"
+                class="detail-btn"
+                (click)="openEventDetail(event)"
+              >
+                ดูรายละเอียดกิจกรรม
+              </button>
+
+            </div>
+
+          </article>
+
+        }
+
+      </div>
+
+    } @else {
+
+      <!-- EMPTY STATE -->
+
+      <div class="empty-state">
+
+        <div class="empty-icon">
+
+          <svg
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9CA3AF"
+            stroke-width="1.8"
+          >
+
+            <rect
+              x="3"
+              y="4"
+              width="18"
+              height="18"
+              rx="2"
+            ></rect>
+
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+
+          </svg>
+
+        </div>
+
+        <h3>ไม่พบกิจกรรม</h3>
+
+        <p>
+          ลองค้นหาด้วยคำอื่น หรือเลือกหมวดหมู่กิจกรรมใหม่
+        </p>
+
+        <button
+          type="button"
+          class="clear-btn"
+          (click)="
+            searchQuery.set('');
+            setCategory('ทั้งหมด')
+          "
+        >
+          แสดงกิจกรรมทั้งหมด
+        </button>
+
+      </div>
+
+    }
+
+  </main>
+
+
+  <!-- ================= FOOTER ================= -->
+
+  <footer class="footer">
+
+    <p>
+      © 2024 EventHub.
+      ระบบลงทะเบียนกิจกรรมออนไลน์เพื่อประชาชน.
+    </p>
+
+    <p>
+      ความปลอดภัยและการจัดการข้อมูลเป็นไปตามมาตรฐานสากล
+    </p>
+
+  </footer>
+
+</div>

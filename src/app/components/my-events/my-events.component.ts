@@ -1,8 +1,10 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+
 import { NavbarComponent } from '../navbar/navbar.component';
+import { EventService } from '../../services/event.service';
 
 export interface MyEventItem {
   id: string;
@@ -24,84 +26,110 @@ interface ToastState {
 @Component({
   selector: 'app-my-events',
   standalone: true,
-  imports: [CommonModule, FormsModule, NavbarComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    NavbarComponent
+  ],
   templateUrl: './my-events.component.html',
   styleUrls: ['./my-events.component.css'],
 })
 export class MyEventsComponent {
-  // Search query
+
+  private readonly eventService = inject(EventService);
+  private readonly router = inject(Router);
+
+  // ข้อมูลจาก EventService ตัวเดียวกับหน้า Event Detail
+  private readonly allEvents = this.eventService.getEvents();
+  private readonly registrations = this.eventService.getRegistrations();
+
   protected readonly searchQuery = signal<string>('');
   protected readonly selectedStatus = signal<string>('ทั้งหมด');
-  protected readonly isUserMenuOpen = signal<boolean>(false);
 
-  // Selected event for Ticket / Detail Modal
-  protected readonly selectedEvent = signal<MyEventItem | null>(null);
-  protected readonly isDetailModalOpen = signal<boolean>(false);
-  protected readonly isCancelModalOpen = signal<boolean>(false);
-  protected readonly eventToCancel = signal<MyEventItem | null>(null);
+  protected readonly selectedEvent =
+    signal<MyEventItem | null>(null);
 
-  // User Profile
-  protected readonly userName = signal<string>('สมชาย รักดี');
-  protected readonly userEmail = signal<string>('somchai.r@email.com');
+  protected readonly isDetailModalOpen =
+    signal<boolean>(false);
 
-  // Toast Notification State
+  protected readonly isCancelModalOpen =
+    signal<boolean>(false);
+
+  protected readonly eventToCancel =
+    signal<MyEventItem | null>(null);
+
+  protected readonly userName =
+    signal<string>('สมชาย รักดี');
+
+  protected readonly userEmail =
+    signal<string>('somchai.r@email.com');
+
   protected readonly toast = signal<ToastState>({
     show: false,
     type: 'info',
     message: '',
   });
 
-  // Registered Events List matching Figma mockup + extra details
-  protected readonly eventsList = signal<MyEventItem[]>([
-    {
-      id: 'event-1',
-      title: 'สัมมนา AI ในอนาคต',
-      date: '24 พ.ย. 2024',
-      location: 'True Digital Park',
-      status: 'ยืนยันแล้ว',
-      ticketCode: 'EVH-AI2024-0891',
-      category: 'เทคโนโลยี',
-      description: 'งานสัมมนาเจาะลึกนวัตกรรมปัญญาประดิษฐ์และ Machine Learning ยุคใหม่สำหรับการทำงานและธุรกิจ',
-    },
-    {
-      id: 'event-2',
-      title: 'งานวิ่ง Mini Marathon',
-      date: '05 ธ.ค. 2024',
-      location: 'สวนลุมพินี กรุงเทพมหานคร',
-      status: 'รอดำเนินการ',
-      ticketCode: 'EVH-RUN2024-1142',
-      category: 'สุขภาพและกีฬา',
-      description: 'กิจกรรมวิ่งเพื่อสุขภาพระยะทาง 5km และ 10km พร้อมรับเหรียญที่ระลึกและเสื้อวิ่ง',
-    },
-    {
-      id: 'event-3',
-      title: 'อบรม Data Analytics สำหรับผู้เริ่มต้น',
-      date: '20 ธ.ค. 2024',
-      location: 'ห้องสัมมนา 402, อาคารสยามพารากอน',
-      status: 'ยกเลิกแล้ว',
-      ticketCode: 'EVH-DATA2024-0023',
-      category: 'เทคโนโลยี',
-      description: 'หลักสูตรอบรมการวิเคราะห์ข้อมูลเบื้องต้นด้วย Python และ PowerBI สำหรับผู้ไม่มีพื้นฐาน',
-    },
-    {
-      id: 'event-4',
-      title: 'Workshop UX/UI Design 2024',
-      date: '15 ม.ค. 2025',
-      location: 'BITEC Bangna, กรุงเทพมหานคร',
-      status: 'ยืนยันแล้ว',
-      ticketCode: 'EVH-UXUI2025-0450',
-      category: 'การออกแบบ',
-      description: 'เวิร์กช็อปฝึกปฏิบัติออกแบบ Design System และสร้าง Interactive Prototype ด้วย Figma',
-    },
-  ]);
+  // =====================================================
+  // เอา Registration มารวมกับรายละเอียด Event
+  // =====================================================
 
-  // Filtered Events Computed Signal
+  protected readonly eventsList = computed<MyEventItem[]>(() => {
+
+    const events = this.allEvents();
+    const registrations = this.registrations();
+
+  return registrations
+    .map((registration): MyEventItem | null => {
+
+      const event = events.find(
+        e => e.id === registration.eventId
+      );
+
+      if (!event) {
+        return null;
+      }
+
+      return {
+      id: event.id,
+      title: event.title,
+      date: event.date,
+      location: event.location,
+
+      status:
+        registration.status === 'CONFIRMED'
+          ? 'ยืนยันแล้ว'
+          : registration.status === 'PENDING'
+            ? 'รอดำเนินการ'
+            : 'ยกเลิกแล้ว',
+
+      ticketCode: `EVH-${registration.id.toUpperCase()}`,
+      category: event.category,
+      description: event.description,
+    };
+    })
+    .filter(
+      (item): item is MyEventItem => item !== null
+    );
+  });
+
+
+  // =====================================================
+  // Search + Status Filter
+  // =====================================================
+
   protected readonly filteredEvents = computed(() => {
-    const list = this.eventsList();
-    const query = this.searchQuery().trim().toLowerCase();
-    const status = this.selectedStatus();
 
-    return list.filter((item) => {
+    const list = this.eventsList();
+
+    const query =
+      this.searchQuery().trim().toLowerCase();
+
+    const status =
+      this.selectedStatus();
+
+    return list.filter(item => {
+
       const matchesQuery =
         !query ||
         item.title.toLowerCase().includes(query) ||
@@ -109,25 +137,22 @@ export class MyEventsComponent {
         item.date.toLowerCase().includes(query);
 
       const matchesStatus =
-        status === 'ทั้งหมด' || item.status === status;
+        status === 'ทั้งหมด' ||
+        item.status === status;
 
       return matchesQuery && matchesStatus;
     });
   });
 
-  constructor(private router: Router) {}
-
-  toggleUserMenu() {
-    this.isUserMenuOpen.update((v) => !v);
-  }
-
-  closeUserMenu() {
-    this.isUserMenuOpen.set(false);
-  }
 
   setStatusFilter(status: string) {
     this.selectedStatus.set(status);
   }
+
+
+  // =====================================================
+  // Event Detail Modal
+  // =====================================================
 
   openEventDetail(event: MyEventItem) {
     this.selectedEvent.set(event);
@@ -138,6 +163,11 @@ export class MyEventsComponent {
     this.isDetailModalOpen.set(false);
     this.selectedEvent.set(null);
   }
+
+
+  // =====================================================
+  // Cancel Registration
+  // =====================================================
 
   promptCancel(event: MyEventItem) {
     this.eventToCancel.set(event);
@@ -150,39 +180,74 @@ export class MyEventsComponent {
   }
 
   confirmCancelRegistration() {
+
     const target = this.eventToCancel();
+
     if (!target) return;
 
-    this.eventsList.update((prev) =>
-      prev.map((e) =>
-        e.id === target.id ? { ...e, status: 'ยกเลิกแล้ว' as const } : e
-      )
+    // ใช้ Service ตัวเดียวกับหน้า Event Detail
+    this.eventService.cancelRegistration(target.id);
+
+    this.showToast(
+      'info',
+      `ยกเลิกการสมัครกิจกรรม "${target.title}" เรียบร้อยแล้ว`
     );
 
-    this.showToast('info', `ยกเลิกการสมัครกิจกรรม "${target.title}" เรียบร้อยแล้ว`);
     this.closeCancelModal();
+    this.closeDetailModal();
+  }
 
-    if (this.isDetailModalOpen() && this.selectedEvent()?.id === target.id) {
-      this.selectedEvent.update((e) => e ? { ...e, status: 'ยกเลิกแล้ว' } : null);
-    }
+
+  // =====================================================
+  // ไปหน้ารายละเอียดจริง
+  // =====================================================
+
+  goToEventDetail(event: MyEventItem) {
+    this.router.navigate(['/events', event.id]);
   }
 
   onReRegister(event: MyEventItem) {
-    this.eventsList.update((prev) =>
-      prev.map((e) =>
-        e.id === event.id ? { ...e, status: 'ยืนยันแล้ว' as const } : e
-      )
-    );
-    this.showToast('success', `สมัครเข้าร่วมกิจกรรม "${event.title}" ใหม่อีกครั้งสำเร็จ!`);
-    if (this.isDetailModalOpen()) {
-      this.selectedEvent.update((e) => e ? { ...e, status: 'ยืนยันแล้ว' } : null);
-    }
+  const originalEvent = this.allEvents().find(
+    e => e.id === event.id
+  );
+
+  if (!originalEvent) return;
+
+  if (this.eventService.isEventRegistered(event.id)) {
+    return;
   }
 
-  private showToast(type: 'success' | 'error' | 'info', message: string) {
-    this.toast.set({ show: true, type, message });
+  this.eventService.registerForEvent({
+    eventId: event.id,
+    userName: this.userName(),
+    userEmail: this.userEmail(),
+  });
+
+  this.showToast(
+    'success',
+    `สมัครเข้าร่วมกิจกรรม "${event.title}" ใหม่อีกครั้งสำเร็จ`
+  );
+
+  this.closeDetailModal();
+}
+  private showToast(
+    type: 'success' | 'error' | 'info',
+    message: string
+  ) {
+
+    this.toast.set({
+      show: true,
+      type,
+      message
+    });
+
     setTimeout(() => {
-      this.toast.update((curr) => ({ ...curr, show: false }));
+
+      this.toast.update(current => ({
+        ...current,
+        show: false
+      }));
+
     }, 4000);
   }
 }
