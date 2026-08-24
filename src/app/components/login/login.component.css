@@ -408,3 +408,31 @@
   box-shadow:
     0 1px 4px rgba(15, 23, 42, 0.04);
 }
+
+/* ================= REGISTER PROMPT ================= */
+.register-prompt-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-family: 'Inter', 'Prompt', sans-serif;
+  font-size: 13px;
+}
+
+.no-account-text {
+  color: #6B7280;
+}
+
+.register-link-btn {
+  color: #2563EB;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.register-link-btn:hover {
+  color: #1D4ED8;
+}

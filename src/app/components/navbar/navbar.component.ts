@@ -14,12 +14,8 @@ export class NavbarComponent {
   @Input() activeTab: string = '';
   @Input() searchQuery: string = '';
   @Output() searchQueryChange = new EventEmitter<string>();
-<<<<<<< HEAD
   @Output() loginClick = new EventEmitter<void>();
-
-=======
   private readonly router = inject(Router);
->>>>>>> b453a5118d2c12bd7e21823bf198544358e990ed
   protected isUserMenuOpen = false;
 
   toggleUserMenu() {
