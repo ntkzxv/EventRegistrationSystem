@@ -5,6 +5,7 @@ import { Router } from '@angular/router';
 
 import { NavbarComponent } from '../navbar/navbar.component';
 import { EventService } from '../../services/event.service';
+import { AuthService } from '../../services/auth.service';
 
 export interface MyEventItem {
   id: string;
@@ -37,11 +38,16 @@ interface ToastState {
 export class MyEventsComponent {
 
   private readonly eventService = inject(EventService);
+  private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
 
   // ข้อมูลจาก EventService ตัวเดียวกับหน้า Event Detail
   private readonly allEvents = this.eventService.getEvents();
   private readonly registrations = this.eventService.getRegistrations();
+
+  constructor() {
+    this.eventService.refreshMyRegistrations();
+  }
 
   protected readonly searchQuery = signal<string>('');
   protected readonly selectedStatus = signal<string>('ทั้งหมด');
@@ -58,11 +64,13 @@ export class MyEventsComponent {
   protected readonly eventToCancel =
     signal<MyEventItem | null>(null);
 
-  protected readonly userName =
-    signal<string>('สมชาย รักดี');
+  protected readonly userName = computed(
+    () => this.authService.getCurrentUser()()?.name ?? ''
+  );
 
-  protected readonly userEmail =
-    signal<string>('somchai.r@email.com');
+  protected readonly userEmail = computed(
+    () => this.authService.getCurrentUser()()?.email ?? ''
+  );
 
   protected readonly toast = signal<ToastState>({
     show: false,
@@ -186,15 +194,18 @@ export class MyEventsComponent {
     if (!target) return;
 
     // ใช้ Service ตัวเดียวกับหน้า Event Detail
-    this.eventService.cancelRegistration(target.id);
+    this.eventService.cancelRegistration(target.id).subscribe((result) => {
 
-    this.showToast(
-      'info',
-      `ยกเลิกการสมัครกิจกรรม "${target.title}" เรียบร้อยแล้ว`
-    );
+      this.showToast(
+        result.success ? 'info' : 'error',
+        result.success
+          ? `ยกเลิกการสมัครกิจกรรม "${target.title}" เรียบร้อยแล้ว`
+          : (result.message ?? 'ยกเลิกการสมัครไม่สำเร็จ')
+      );
 
-    this.closeCancelModal();
-    this.closeDetailModal();
+      this.closeCancelModal();
+      this.closeDetailModal();
+    });
   }
 
 
@@ -217,18 +228,17 @@ export class MyEventsComponent {
     return;
   }
 
-  this.eventService.registerForEvent({
-    eventId: event.id,
-    userName: this.userName(),
-    userEmail: this.userEmail(),
+  this.eventService.registerForEvent(event.id).subscribe((result) => {
+
+    this.showToast(
+      result.success ? 'success' : 'error',
+      result.success
+        ? `สมัครเข้าร่วมกิจกรรม "${event.title}" ใหม่อีกครั้งสำเร็จ`
+        : (result.message ?? 'สมัครเข้าร่วมกิจกรรมไม่สำเร็จ')
+    );
+
+    this.closeDetailModal();
   });
-
-  this.showToast(
-    'success',
-    `สมัครเข้าร่วมกิจกรรม "${event.title}" ใหม่อีกครั้งสำเร็จ`
-  );
-
-  this.closeDetailModal();
 }
   private showToast(
     type: 'success' | 'error' | 'info',

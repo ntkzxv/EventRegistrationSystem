@@ -1,8 +1,19 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, of, tap } from 'rxjs';
+
 import { NavbarComponent } from '../navbar/navbar.component';
+import { API_BASE_URL } from '../../core/api.constants';
+import { formatThaiDate, parseThaiDateToIsoRange } from '../../core/thai-date';
+import {
+  ApiEventListResponse,
+  ApiEventSummary,
+  ApiEventType,
+  ApiVenue,
+} from '../../models/api.model';
 
 export interface RegistrantItem {
   id: string;
@@ -24,10 +35,34 @@ export interface AdminEventItem {
   registrants: RegistrantItem[];
 }
 
+interface ApiRegistrantItem {
+  id: number;
+  user: { name: string; email: string } | null;
+  status: 'confirmed' | 'cancelled';
+  registered_at: string;
+}
+
 interface ToastState {
   show: boolean;
   type: 'success' | 'error' | 'info';
   message: string;
+}
+
+function mapAdminEvent(api: ApiEventSummary): AdminEventItem {
+  const status: AdminEventItem['status'] =
+    api.status === 'closed' ? 'ปิดรับ' : api.seats_remaining <= 0 ? 'เต็ม' : 'เปิดรับ';
+
+  return {
+    id: String(api.id),
+    title: api.name,
+    date: formatThaiDate(api.start_date),
+    location: api.venue?.name ?? '',
+    category: api.event_type?.name ?? '',
+    registeredCount: Math.max(0, api.max_seats - api.seats_remaining),
+    capacity: api.max_seats,
+    status,
+    registrants: [],
+  };
 }
 
 @Component({
@@ -38,11 +73,13 @@ interface ToastState {
   styleUrls: ['./admin-event-management.component.css'],
 })
 export class AdminEventManagementComponent {
+  private readonly http = inject(HttpClient);
+
   // Navigation active tab
   protected readonly activeTab = signal<'events' | 'dashboard'>('events');
 
-  // Expanded event ID (default to first event 'event-1' as shown in Figma)
-  protected readonly expandedEventId = signal<string | null>('event-1');
+  // Expanded event ID
+  protected readonly expandedEventId = signal<string | null>(null);
 
   // Search and filter
   protected readonly searchQuery = signal<string>('');
@@ -69,113 +106,12 @@ export class AdminEventManagementComponent {
     message: '',
   });
 
-  // Admin Events dataset matching Figma spec
-  protected readonly events = signal<AdminEventItem[]>([
-    {
-      id: 'event-1',
-      title: 'สัมมนา AI ในอนาคต',
-      date: '24 พ.ย. 2024',
-      location: 'True Digital Park',
-      category: 'เทคโนโลยี',
-      registeredCount: 108,
-      capacity: 120,
-      status: 'เปิดรับ',
-      registrants: [
-        {
-          id: 'reg-1',
-          name: 'นาย สมศักดิ์ มีชัย',
-          email: 'somsak@email.com',
-          registeredDate: '12 พ.ย. 2024',
-          status: 'ยืนยันแล้ว',
-        },
-        {
-          id: 'reg-2',
-          name: 'นางสาว พัชรา แสงทอง',
-          email: 'patchara.s@email.com',
-          registeredDate: '14 พ.ย. 2024',
-          status: 'ยืนยันแล้ว',
-        },
-        {
-          id: 'reg-3',
-          name: 'นาย มงคล เจริญรัตน์',
-          email: 'mongkol.c@email.com',
-          registeredDate: '15 พ.ย. 2024',
-          status: 'รอดำเนินการ',
-        },
-        {
-          id: 'reg-4',
-          name: 'นาง วิภา เลิศเลอ',
-          email: 'wipha.l@email.com',
-          registeredDate: '15 พ.ย. 2024',
-          status: 'ยืนยันแล้ว',
-        },
-      ],
-    },
-    {
-      id: 'event-2',
-      title: 'Workshop UX/UI Design',
-      date: '30 พ.ย. 2024',
-      location: 'อาคารวิศวกรรม',
-      category: 'การออกแบบ',
-      registeredCount: 35,
-      capacity: 40,
-      status: 'เปิดรับ',
-      registrants: [
-        {
-          id: 'reg-201',
-          name: 'นางสาว อรอนงค์ ปรีชา',
-          email: 'on-anong@email.com',
-          registeredDate: '14 พ.ย. 2024',
-          status: 'ยืนยันแล้ว',
-        },
-        {
-          id: 'reg-202',
-          name: 'นาย ชาคริต รุ่งอรุณ',
-          email: 'chakrit.r@email.com',
-          registeredDate: '16 พ.ย. 2024',
-          status: 'ยืนยันแล้ว',
-        },
-      ],
-    },
-    {
-      id: 'event-3',
-      title: 'งานวิ่ง Mini Marathon',
-      date: '05 ธ.ค. 2024',
-      location: 'สวนลุมพินี',
-      category: 'กีฬา',
-      registeredCount: 358,
-      capacity: 500,
-      status: 'เปิดรับ',
-      registrants: [
-        {
-          id: 'reg-301',
-          name: 'นาย สมบัติ นามดี',
-          email: 'sombat.n@email.com',
-          registeredDate: '15 พ.ย. 2024',
-          status: 'รอดำเนินการ',
-        },
-      ],
-    },
-    {
-      id: 'event-4',
-      title: 'คอนเสิร์ตการกุศล',
-      date: '15 ธ.ค. 2024',
-      location: 'ศูนย์วัฒนธรรมฯ',
-      category: 'ดนตรี',
-      registeredCount: 300,
-      capacity: 300,
-      status: 'เต็ม',
-      registrants: [
-        {
-          id: 'reg-401',
-          name: 'นาย พิพัฒน์ สุขสันต์',
-          email: 'pipat.s@email.com',
-          registeredDate: '10 พ.ย. 2024',
-          status: 'ยืนยันแล้ว',
-        },
-      ],
-    },
-  ]);
+  // Events dataset (จาก backend)
+  protected readonly events = signal<AdminEventItem[]>([]);
+
+  // Lookup tables สำหรับแปลงชื่อ <-> id ตอนบันทึกฟอร์ม
+  private readonly venues = signal<ApiVenue[]>([]);
+  private readonly eventTypes = signal<ApiEventType[]>([]);
 
   // Filtered Events Computed Signal
   protected readonly filteredEvents = computed(() => {
@@ -196,14 +132,59 @@ export class AdminEventManagementComponent {
     });
   });
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) {
+    this.loadEvents();
+    this.loadLookups();
+  }
+
+  private loadEvents() {
+    this.http.get<ApiEventListResponse>(`${API_BASE_URL}/events`).subscribe((res) => {
+      this.events.set(res.data.map(mapAdminEvent));
+
+      // ถ้ามีแถวที่เปิดดูรายชื่อผู้ลงทะเบียนอยู่ ให้โหลดใหม่ (ไม่งั้นจะโดนล้างว่างไปตอน events reload)
+      const expandedId = this.expandedEventId();
+      if (expandedId) {
+        this.loadRegistrants(expandedId);
+      }
+    });
+  }
+
+  private loadLookups() {
+    this.http
+      .get<{ data: ApiVenue[] }>(`${API_BASE_URL}/admin/venues`)
+      .subscribe((res) => this.venues.set(res.data));
+
+    this.http
+      .get<{ data: ApiEventType[] }>(`${API_BASE_URL}/admin/event-types`)
+      .subscribe((res) => this.eventTypes.set(res.data));
+  }
+
+  private loadRegistrants(eventId: string) {
+    this.http
+      .get<{ data: ApiRegistrantItem[] }>(`${API_BASE_URL}/admin/events/${eventId}/registrants`)
+      .subscribe((res) => {
+        const registrants: RegistrantItem[] = res.data.map((r) => ({
+          id: String(r.id),
+          name: r.user?.name ?? '',
+          email: r.user?.email ?? '',
+          registeredDate: formatThaiDate(r.registered_at),
+          status: r.status === 'confirmed' ? 'ยืนยันแล้ว' : 'ยกเลิกแล้ว',
+        }));
+
+        this.events.update((prev) =>
+          prev.map((e) => (e.id === eventId ? { ...e, registrants } : e))
+        );
+      });
+  }
 
   toggleExpand(eventId: string) {
     if (this.expandedEventId() === eventId) {
       this.expandedEventId.set(null);
-    } else {
-      this.expandedEventId.set(eventId);
+      return;
     }
+
+    this.expandedEventId.set(eventId);
+    this.loadRegistrants(eventId);
   }
 
   toggleUserMenu() {
@@ -249,50 +230,85 @@ export class AdminEventManagementComponent {
       return;
     }
 
-    if (this.modalMode() === 'add') {
-      const newEvent: AdminEventItem = {
-        id: 'event-' + Date.now(),
-        title: this.formTitle(),
-        date: this.formDate(),
-        location: this.formLocation(),
-        category: this.formCategory(),
-        registeredCount: 0,
-        capacity: Number(this.formCapacity()),
-        status: this.formStatus(),
-        registrants: [],
-      };
-      this.events.update((prev) => [newEvent, ...prev]);
-      this.showToast('success', `เพิ่มกิจกรรม "${newEvent.title}" สำเร็จ`);
-    } else {
-      const eventId = this.editingEventId();
-      this.events.update((prev) =>
-        prev.map((e) =>
-          e.id === eventId
-            ? {
-                ...e,
-                title: this.formTitle(),
-                date: this.formDate(),
-                location: this.formLocation(),
-                category: this.formCategory(),
-                capacity: Number(this.formCapacity()),
-                status: this.formStatus(),
-              }
-            : e
-        )
-      );
-      this.showToast('success', 'บันทึกการแก้ไขกิจกรรมเรียบร้อย');
+    const range = parseThaiDateToIsoRange(this.formDate());
+
+    if (!range) {
+      this.showToast('error', 'รูปแบบวันที่ไม่ถูกต้อง กรุณาใช้รูปแบบ เช่น 24 พ.ย. 2024');
+      return;
     }
 
-    this.closeEventModal();
+    this.resolveVenueId(this.formLocation()).subscribe((venueId) => {
+      const payload = {
+        name: this.formTitle(),
+        event_type_id: this.resolveEventTypeId(this.formCategory()),
+        venue_id: venueId,
+        start_date: range.start,
+        end_date: range.end,
+        max_seats: Number(this.formCapacity()),
+        status: this.formStatus() === 'ปิดรับ' ? 'closed' : 'open',
+      };
+
+      if (this.modalMode() === 'add') {
+        this.http.post(`${API_BASE_URL}/admin/events`, payload).subscribe({
+          next: () => {
+            this.loadEvents();
+            this.showToast('success', `เพิ่มกิจกรรม "${payload.name}" สำเร็จ`);
+            this.closeEventModal();
+          },
+          error: () => this.showToast('error', 'เพิ่มกิจกรรมไม่สำเร็จ'),
+        });
+      } else {
+        const eventId = this.editingEventId();
+
+        this.http.put(`${API_BASE_URL}/admin/events/${eventId}`, payload).subscribe({
+          next: () => {
+            this.loadEvents();
+            this.showToast('success', 'บันทึกการแก้ไขกิจกรรมเรียบร้อย');
+            this.closeEventModal();
+          },
+          error: () => this.showToast('error', 'บันทึกการแก้ไขไม่สำเร็จ'),
+        });
+      }
+    });
+  }
+
+  private resolveVenueId(name: string): Observable<number> {
+    const trimmed = name.trim();
+    const existing = this.venues().find((v) => v.name.trim() === trimmed);
+
+    if (existing) {
+      return of(existing.id);
+    }
+
+    return this.http
+      .post<ApiVenue>(`${API_BASE_URL}/admin/venues`, { name: trimmed, address: '', capacity: 0 })
+      .pipe(
+        tap((venue) => this.venues.update((prev) => [...prev, venue])),
+        map((venue) => venue.id)
+      );
+  }
+
+  private resolveEventTypeId(name: string): number {
+    return (
+      this.eventTypes().find((t) => t.name === name)?.id ??
+      this.eventTypes()[0]?.id ??
+      1
+    );
   }
 
   toggleEventStatus(event: AdminEventItem, evt: Event) {
     evt.stopPropagation();
-    const newStatus = event.status === 'เปิดรับ' ? 'ปิดรับ' : 'เปิดรับ';
-    this.events.update((prev) =>
-      prev.map((e) => (e.id === event.id ? { ...e, status: newStatus } : e))
-    );
-    this.showToast('info', `เปลี่ยนสถานะกิจกรรม "${event.title}" เป็น "${newStatus}" แล้ว`);
+    const newStatus = event.status === 'ปิดรับ' ? 'open' : 'closed';
+
+    this.http
+      .patch(`${API_BASE_URL}/admin/events/${event.id}/status`, { status: newStatus })
+      .subscribe(() => {
+        this.loadEvents();
+        this.showToast(
+          'info',
+          `เปลี่ยนสถานะกิจกรรม "${event.title}" เป็น "${newStatus === 'open' ? 'เปิดรับ' : 'ปิดรับ'}" แล้ว`
+        );
+      });
   }
 
   private showToast(type: 'success' | 'error' | 'info', message: string) {

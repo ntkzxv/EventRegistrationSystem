@@ -1,5 +1,16 @@
-import { Injectable, signal } from "@angular/core";
+import { Injectable, inject, signal } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
+import { Observable, catchError, map, of, tap } from "rxjs";
 import { Event, Registration } from "../models/event.model";
+import {
+  ApiEventListResponse,
+  ApiEventSummary,
+  ApiMyRegistrationsResponse,
+  ApiRegisterResponse,
+} from "../models/api.model";
+import { API_BASE_URL } from "../core/api.constants";
+import { formatThaiDateRange } from "../core/thai-date";
+import { AuthService } from "./auth.service";
 
 const EVENT_TYPE_COLORS: Record<string, string> = {
   'เทคโนโลยี': '#2563EB',
@@ -8,88 +19,44 @@ const EVENT_TYPE_COLORS: Record<string, string> = {
   'สุขภาพและกีฬา': '#10B981',
 };
 
+function mapApiEventToEvent(api: ApiEventSummary): Event {
+  return {
+    id: String(api.id),
+    title: api.name,
+    description: api.description ?? '',
+    date: formatThaiDateRange(api.start_date, api.end_date),
+    location: api.venue?.name ?? '',
+    capacity: api.max_seats,
+    registeredCount: Math.max(0, api.max_seats - api.seats_remaining),
+    category: api.event_type?.name ?? '',
+  };
+}
+
 @Injectable({
   providedIn: "root",
 })
 export class EventService {
-  private readonly events = signal<Event[]>([
-    {
-      id: "1",
-      title: "สัมมนา AI ในอนาคต",
-      description: "ร่วมเจาะลึกนวัตกรรมปัญญาประดิษฐ์ (AI & LLM) กับผู้เชี่ยวชาญระดับแนวหน้าของไทย ทำความเข้าใจแนวโน้มและการประยุกต์ใช้ AI ในภาคธุรกิจและชีวิตประจำวัน",
-      date: "24 พ.ย. 2024 • 09:00 - 16:30 น.",
-      location: "ห้องประชุมใหญ่ A, True Digital Park",
-      capacity: 120,
-      registeredCount: 108,
-      category: "เทคโนโลยี",
-    },
-    {
-      id: "2",
-      title: "Workshop UX/UI Design",
-      description: "เวิร์กช็อปเข้มข้นที่จะพาคุณฝึกฝนการออกแบบ User Experience และ User Interface สำหรับแอปพลิเคชันยุคใหม่ พร้อมการลงมือปฏิบัติจริงด้วย Figma",
-      date: "30 พ.ย. 2024 • 13:00 - 17:00 น.",
-      location: "อาคารวิศวกรรม, มหาวิทยาลัยชื่อดัง",
-      capacity: 40,
-      registeredCount: 35,
-      category: "การออกแบบ",
-    },
-    {
-      id: "3",
-      title: "Thailand Tech Conference 2024",
-      description: "งานประชุมเทคโนโลยีที่ใหญ่ที่สุดแห่งปี รวบรวมหัวข้อด้าน Cloud, DevOps, Cyber Security และ Software Engineering จากวิทยากรระดับ Global",
-      date: "15 ธ.ค. 2024 • 09:00 - 18:00 น.",
-      location: "BITEC Bangna, กรุงเทพมหานคร",
-      capacity: 500,
-      registeredCount: 342,
-      category: "เทคโนโลยี",
-    },
-    {
-      id: "4",
-      title: "Creative Coding & Design Summit",
-      description: "การพบปะของนักออกแบบและนักพัฒนาที่สร้างสรรค์งาน Interactive Art, Generative Design และ Creative Technology",
-      date: "20 ธ.ค. 2024 • 10:00 - 16:00 น.",
-      location: "Samyan Mitrtown Hall, กรุงเทพมหานคร",
-      capacity: 200,
-      registeredCount: 180,
-      category: "การออกแบบ",
-    },
-    {
-      id: "5",
-      title: "Thai Food & Gastronomy Expo",
-      description: "สัมผัสวัฒนธรรมอาหารไทยร่วมสมัย เทคนิคการปรุงอาหาร และการต่อยอดวัตถุดิบท้องถิ่นสู่มาตรฐานสากล พร้อมชิมอาหารจากเชฟชื่อดัง",
-      date: "5 ม.ค. 2025 • 11:00 - 20:00 น.",
-      location: "Siam Square One, กรุงเทพมหานคร",
-      capacity: 1000,
-      registeredCount: 850,
-      category: "อาหารและเครื่องดื่ม",
-    },
-    {
-      id: "6",
-      title: "Bangkok City Marathon & Wellness",
-      description: "กิจกรรมวิ่งเพื่อสุขภาพใจกลางเมือง ส่งเสริมการออกกำลังกาย พร้อมจุดบริการสุขภาพและให้คำปรึกษาด้านโภชนาการฟรี",
-      date: "18 ม.ค. 2025 • 05:00 - 10:00 น.",
-      location: "สวนลุมพินี, กรุงเทพมหานคร",
-      capacity: 800,
-      registeredCount: 720,
-      category: "สุขภาพและกีฬา",
-    },
-  ]);
-  getCategoryColor(category: string): string {
-  return EVENT_TYPE_COLORS[category] ?? '#6B7280';
+  private readonly http = inject(HttpClient);
+  private readonly authService = inject(AuthService);
+
+  private readonly events = signal<Event[]>([]);
+  private readonly registrations = signal<Registration[]>([]);
+  private readonly loaded = signal<boolean>(false);
+
+  constructor() {
+    this.loadEvents();
   }
-  private readonly registrations = signal<Registration[]>([
-    {
-      id: "reg-demo-1",
-      eventId: "1",
-      userName: "สมชาย รักดี",
-      userEmail: "somchai.r@email.com",
-      registrationDate: "2024-11-01T10:00:00.000Z",
-      status: "CONFIRMED",
-    }
-  ]);
+
+  getCategoryColor(category: string): string {
+    return EVENT_TYPE_COLORS[category] ?? '#6B7280';
+  }
 
   getEvents() {
     return this.events.asReadonly();
+  }
+
+  isLoaded() {
+    return this.loaded.asReadonly();
   }
 
   getRegistrations() {
@@ -99,76 +66,83 @@ export class EventService {
   getEventById(id: string) {
     return this.events().find((e) => e.id === id);
   }
+
   getRegistrationByEventId(eventId: string) {
-  return [...this.registrations()]
-    .reverse()
-    .find((r) => r.eventId === eventId);
+    // registrations() มาจาก backend ที่เรียงล่าสุดก่อนแล้ว
+    return this.registrations().find((r) => r.eventId === eventId);
   }
+
   isEventRegistered(eventId: string): boolean {
-    return this.registrations().some((r) => r.eventId === eventId);
+    return this.registrations().some(
+      (r) => r.eventId === eventId && r.status !== 'CANCELLED'
+    );
   }
 
-  registerForEvent(registration: Omit<Registration, "id" | "registrationDate"| "status">) {
-    const newRegistration: Registration = {
-      ...registration,
-      id: Math.random().toString(36).substring(2, 9),
-      registrationDate: new Date().toISOString(),
-      status: "PENDING",
-    };
-
-    this.registrations.update((prev) => [...prev, newRegistration]);
-    
-    // Update event count
-    this.events.update((prev) => 
-      prev.map((e) => 
-        e.id === registration.eventId 
-          ? { ...e, registeredCount: Math.min(e.capacity, e.registeredCount + 1) } 
-          : e
-      )
-    );
-
-    return newRegistration;
+  loadEvents(): void {
+    this.http.get<ApiEventListResponse>(`${API_BASE_URL}/events`).subscribe({
+      next: (res) => {
+        this.events.set(res.data.map(mapApiEventToEvent));
+        this.loaded.set(true);
+      },
+      error: () => this.loaded.set(true),
+    });
   }
 
-  cancelRegistration(eventId: string) {
-
-    const registration = this.registrations().find(
-      (r) =>
-        r.eventId === eventId &&
-        r.status !== 'CANCELLED'
-    );
-
-    if (!registration) {
+  refreshMyRegistrations(): void {
+    if (!this.authService.isLoggedIn()) {
+      this.registrations.set([]);
       return;
     }
 
-    // เปลี่ยนสถานะเป็น CANCELLED
-    // ไม่ลบ Registration
-    this.registrations.update((prev) =>
-      prev.map((r) =>
-        r.id === registration.id
-          ? {
-              ...r,
-              status: 'CANCELLED'
-            }
-          : r
-      )
-    );
+    const currentUser = this.authService.getCurrentUser()();
 
-    // คืนที่นั่ง
-    this.events.update((prev) =>
-      prev.map((event) =>
-        event.id === eventId
-          ? {
-              ...event,
-              registeredCount: Math.max(
-                0,
-                event.registeredCount - 1
-              )
-            }
-          : event
+    this.http
+      .get<ApiMyRegistrationsResponse>(`${API_BASE_URL}/users/me/registrations`)
+      .subscribe((res) => {
+        this.registrations.set(
+          res.data
+            .filter((item) => item.event !== null)
+            .map((item): Registration => ({
+              id: String(item.id),
+              eventId: String(item.event!.id),
+              userName: currentUser?.name ?? '',
+              userEmail: currentUser?.email ?? '',
+              registrationDate: item.registered_at,
+              status: item.status === 'confirmed' ? 'CONFIRMED' : 'CANCELLED',
+            }))
+        );
+      });
+  }
+
+  registerForEvent(eventId: string): Observable<{ success: boolean; message?: string }> {
+    return this.http
+      .post<ApiRegisterResponse>(`${API_BASE_URL}/events/${eventId}/register`, {})
+      .pipe(
+        tap(() => {
+          this.loadEvents();
+          this.refreshMyRegistrations();
+        }),
+        map(() => ({ success: true })),
+        catchError((err) =>
+          of({ success: false, message: err.error?.message as string | undefined })
+        )
+      );
+  }
+
+  cancelRegistration(eventId: string): Observable<{ success: boolean; message?: string }> {
+    return this.http
+      .delete<{ success: boolean; message: string }>(
+        `${API_BASE_URL}/events/${eventId}/register`
       )
-    );
+      .pipe(
+        tap(() => {
+          this.loadEvents();
+          this.refreshMyRegistrations();
+        }),
+        map((res) => ({ success: res.success })),
+        catchError((err) =>
+          of({ success: false, message: err.error?.message as string | undefined })
+        )
+      );
   }
 }
-

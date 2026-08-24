@@ -1,10 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { NavbarComponent } from '../navbar/navbar.component';
 import { EventService } from '../../services/event.service';
-import { Event } from '../../models/event.model';
+import { AuthService } from '../../services/auth.service';
+import { Event, Registration } from '../../models/event.model';
 
 @Component({
   selector: 'app-event-detail',
@@ -21,6 +22,7 @@ export class EventDetailComponent {
   // ================= SERVICES =================
 
   private readonly eventService = inject(EventService);
+  private readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
@@ -29,10 +31,17 @@ export class EventDetailComponent {
 
   protected readonly searchQuery = signal<string>('');
 
-  protected readonly event = signal<Event | null>(null);
+  private readonly eventId: string;
 
-  protected readonly registrationStatus =
-    signal<'PENDING' | 'CONFIRMED' | 'CANCELLED' | null>(null);
+  protected readonly event = computed<Event | null>(() => {
+    const found = this.eventService.getEventById(this.eventId);
+    return found ?? null;
+  });
+
+  protected readonly registrationStatus = computed<Registration['status'] | null>(() => {
+    const registration = this.eventService.getRegistrationByEventId(this.eventId);
+    return registration?.status ?? null;
+  });
 
   protected readonly successMessage = signal<string>('');
 
@@ -45,27 +54,20 @@ export class EventDetailComponent {
 
     if (!id) {
       this.router.navigate(['/events']);
+      this.eventId = '';
       return;
     }
 
-    const foundEvent =
-      this.eventService.getEventById(id);
+    this.eventId = id;
 
-    if (!foundEvent) {
-      this.router.navigate(['/events']);
-      return;
-    }
+    this.eventService.refreshMyRegistrations();
 
-    this.event.set(foundEvent);
-
-
-    // เช็กสถานะการสมัครของ Event นี้
-    const registration =
-      this.eventService.getRegistrationByEventId(id);
-
-    this.registrationStatus.set(
-      registration?.status ?? null
-    );
+    // ถ้าโหลดรายการกิจกรรมเสร็จแล้วแต่ไม่พบ id นี้ ให้ถือว่าไม่พบกิจกรรมจริง ๆ
+    effect(() => {
+      if (this.eventService.isLoaded()() && !this.event()) {
+        this.router.navigate(['/events']);
+      }
+    });
   }
 
 
@@ -116,11 +118,14 @@ export class EventDetailComponent {
     if (!currentEvent) return;
 
 
-    // ถ้ากำลังรอหรือยืนยันแล้ว ห้ามสมัครซ้ำ
-    if (
-      this.registrationStatus() === 'PENDING' ||
-      this.registrationStatus() === 'CONFIRMED'
-    ) {
+    if (!this.authService.isLoggedIn()) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+
+    // ถ้ายืนยันแล้ว ห้ามสมัครซ้ำ
+    if (this.registrationStatus() === 'CONFIRMED') {
       return;
     }
 
@@ -131,39 +136,22 @@ export class EventDetailComponent {
     }
 
 
-    const registration =
-      this.eventService.registerForEvent({
-        eventId: currentEvent.id,
-        userName: 'สมชาย รักดี',
-        userEmail: 'somchai.r@email.com',
-      });
+    this.eventService.registerForEvent(currentEvent.id).subscribe((result) => {
 
+      if (!result.success) {
+        this.successMessage.set(result.message ?? 'สมัครเข้าร่วมกิจกรรมไม่สำเร็จ');
+        setTimeout(() => this.successMessage.set(''), 4000);
+        return;
+      }
 
-    // สมัครใหม่จะเป็น PENDING
-    this.registrationStatus.set(
-      registration.status
-    );
-
-
-    // อัปเดตจำนวนผู้สมัคร
-    const updatedEvent =
-      this.eventService.getEventById(
-        currentEvent.id
+      this.successMessage.set(
+        'สมัครเข้าร่วมกิจกรรมสำเร็จ กรุณาตรวจสอบสถานะที่เมนู "กิจกรรมของฉัน"'
       );
 
-    if (updatedEvent) {
-      this.event.set(updatedEvent);
-    }
-
-
-    this.successMessage.set(
-      'ส่งคำขอเข้าร่วมกิจกรรมเรียบร้อยแล้ว กรุณารอการยืนยัน'
-    );
-
-
-    setTimeout(() => {
-      this.successMessage.set('');
-    }, 4000);
+      setTimeout(() => {
+        this.successMessage.set('');
+      }, 4000);
+    });
   }
 
 

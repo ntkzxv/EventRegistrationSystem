@@ -1,8 +1,11 @@
-import { Component, computed, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { NavbarComponent } from '../navbar/navbar.component';
+import { API_BASE_URL } from '../../core/api.constants';
+import { formatThaiDate } from '../../core/thai-date';
 
 export interface RecentRegistration {
   id: string;
@@ -10,6 +13,19 @@ export interface RecentRegistration {
   eventName: string;
   registeredDate: string;
   status: 'สำเร็จ' | 'รอดำเนินการ' | 'ยกเลิกแล้ว';
+}
+
+interface ApiDashboardResponse {
+  total_registrations: number;
+  total_events: number;
+  open_events: number;
+  closed_events: number;
+  recent_registrations: {
+    user_name: string;
+    event_name: string;
+    registered_at: string;
+    status: 'confirmed' | 'cancelled';
+  }[];
 }
 
 interface ToastState {
@@ -26,6 +42,8 @@ interface ToastState {
   styleUrls: ['./admin-dashboard.component.css'],
 })
 export class AdminDashboardComponent {
+  private readonly http = inject(HttpClient);
+
   // Navigation active tab
   protected readonly activeTab = signal<'dashboard' | 'events'>('dashboard');
 
@@ -42,56 +60,13 @@ export class AdminDashboardComponent {
   });
 
   // KPI Metrics Signals
-  protected readonly totalRegistrations = signal<number>(801);
-  protected readonly totalEvents = signal<number>(8);
-  protected readonly activeEvents = signal<number>(5);
-  protected readonly closedEvents = signal<number>(3);
+  protected readonly totalRegistrations = signal<number>(0);
+  protected readonly totalEvents = signal<number>(0);
+  protected readonly activeEvents = signal<number>(0);
+  protected readonly closedEvents = signal<number>(0);
 
-  // Registrations Dataset matching Figma mockup
-  protected readonly registrations = signal<RecentRegistration[]>([
-    {
-      id: 'reg-1',
-      name: 'นาง วิภา เลิศเลอ',
-      eventName: 'สัมมนา AI ในอนาคต',
-      registeredDate: '15 พ.ย. 2024 - 14:32 น.',
-      status: 'สำเร็จ',
-    },
-    {
-      id: 'reg-2',
-      name: 'นาย สมบัติ นามดี',
-      eventName: 'งานวิ่ง Mini Marathon',
-      registeredDate: '15 พ.ย. 2024 - 13:15 น.',
-      status: 'รอดำเนินการ',
-    },
-    {
-      id: 'reg-3',
-      name: 'นางสาว อรอนงค์ ปรีชา',
-      eventName: 'Workshop UX/UI Design',
-      registeredDate: '14 พ.ย. 2024 - 16:45 น.',
-      status: 'สำเร็จ',
-    },
-    {
-      id: 'reg-4',
-      name: 'นาย สุวัจน์ พิสุทธิ์',
-      eventName: 'อบรม Data Analytics',
-      registeredDate: '14 พ.ย. 2024 - 10:20 น.',
-      status: 'ยกเลิกแล้ว',
-    },
-    {
-      id: 'reg-5',
-      name: 'นาย วิทยา เกริกไกร',
-      eventName: 'สัมมนา AI ในอนาคต',
-      registeredDate: '13 พ.ย. 2024 - 09:12 น.',
-      status: 'สำเร็จ',
-    },
-    {
-      id: 'reg-6',
-      name: 'นาย ชาคริต รุ่งอรุณ',
-      eventName: 'คอนเสิร์ตการกุศล',
-      registeredDate: '12 พ.ย. 2024 - 17:05 น.',
-      status: 'สำเร็จ',
-    },
-  ]);
+  // Registrations Dataset (จาก backend)
+  protected readonly registrations = signal<RecentRegistration[]>([]);
 
   // Filtered Registrations Computed Signal
   protected readonly filteredRegistrations = computed(() => {
@@ -112,7 +87,28 @@ export class AdminDashboardComponent {
     });
   });
 
-  constructor(private router: Router) {}
+  constructor(private router: Router) {
+    this.loadDashboard();
+  }
+
+  private loadDashboard() {
+    this.http.get<ApiDashboardResponse>(`${API_BASE_URL}/admin/dashboard`).subscribe((res) => {
+      this.totalRegistrations.set(res.total_registrations);
+      this.totalEvents.set(res.total_events);
+      this.activeEvents.set(res.open_events);
+      this.closedEvents.set(res.closed_events);
+
+      this.registrations.set(
+        res.recent_registrations.map((r, index) => ({
+          id: `reg-${index}`,
+          name: r.user_name,
+          eventName: r.event_name,
+          registeredDate: formatThaiDate(r.registered_at),
+          status: r.status === 'confirmed' ? 'สำเร็จ' : 'ยกเลิกแล้ว',
+        }))
+      );
+    });
+  }
 
   toggleUserMenu() {
     this.isUserMenuOpen.update((v) => !v);
