@@ -14,6 +14,7 @@ export class NavbarComponent {
   @Input() activeTab: string = '';
   @Input() searchQuery: string = '';
   @Output() searchQueryChange = new EventEmitter<string>();
+  @Output() loginClick = new EventEmitter<void>();
 
   protected isUserMenuOpen = false;
 
@@ -23,6 +24,10 @@ export class NavbarComponent {
 
   closeUserMenu() {
     this.isUserMenuOpen = false;
+  }
+
+  onLoginClick() {
+    this.loginClick.emit();
   }
 
   onSearchChange(value: string) {

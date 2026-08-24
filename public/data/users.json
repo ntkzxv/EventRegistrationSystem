@@ -1,0 +1,10 @@
+[
+  {
+    "id": "usr-demo-1",
+    "fullName": "สมชาย รักดี",
+    "email": "somchai.r@email.com",
+    "phoneNumber": "081-234-5678",
+    "role": "user",
+    "createdAt": "2024-11-01T10:00:00.000Z"
+  }
+]
