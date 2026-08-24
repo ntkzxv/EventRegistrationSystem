@@ -20,6 +20,20 @@
       "email": "test.user@email.com",
       "password": "$2a$10$roAvplcfqw6JNyvjzF27s.QNRruenOBDOvk/ViDTm31cIse4j8Ijm",
       "role": "user"
+    },
+    {
+      "id": 6,
+      "name": "Test User",
+      "email": "test999@test.com",
+      "password": "$2a$10$UK/nr68a/Eo1OdWC.L9m7OdaNAS4sd8Vwy2E0FMmfFkQ5gzxojp8S",
+      "role": "user"
+    },
+    {
+      "id": 7,
+      "name": "test",
+      "email": "test@gmail.com",
+      "password": "$2a$10$sisYEP4PgNEyECFea7Swke0D2DijS7yB.Yw9SpiERkBR0QoGWPlRu",
+      "role": "user"
     }
   ],
   "event_types": [
@@ -103,9 +117,9 @@
       "organizer_contact_email": "contact@tita.or.th",
       "organizer_contact_phone": "02-123-4567",
       "start_date": "2024-11-24T09:00:00",
-      "end_date": "2024-11-24T16:30:00",
+      "end_date": "2024-11-24T17:00:00",
       "max_seats": 120,
-      "status": "open"
+      "status": "closed"
     },
     {
       "id": 2,
@@ -206,13 +220,20 @@
       "user_id": 1,
       "status": "confirmed",
       "registered_at": "2026-08-24T10:06:34.327Z"
+    },
+    {
+      "id": 5,
+      "event_id": 1,
+      "user_id": 7,
+      "status": "confirmed",
+      "registered_at": "2026-08-24T11:05:09.023Z"
     }
   ],
   "_meta": {
-    "nextUserId": 6,
+    "nextUserId": 8,
     "nextEventId": 8,
     "nextVenueId": 8,
     "nextEventTypeId": 7,
-    "nextRegistrationId": 5
+    "nextRegistrationId": 6
   }
 }
