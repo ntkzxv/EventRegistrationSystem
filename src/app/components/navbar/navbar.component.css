@@ -364,3 +364,20 @@
     font-size: 12px;
   }
 }
+/* ================= logout ================= */
+.logout-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+
+  color: #DC2626;
+
+  font-family: 'Inter', 'Prompt', sans-serif;
+
+  cursor: pointer;
+}
+
+.logout-item:hover {
+  background: #FEF2F2;
+  color: #B91C1C;
+}
