@@ -4,9 +4,13 @@ import { AdminEventManagementComponent } from './components/admin-event-manageme
 import { AdminDashboardComponent } from './components/admin-dashboard/admin-dashboard.component';
 import { EventListComponent } from './components/event-list/event-list.component';
 import { EventDetailComponent } from './components/event-detail/event-detail.component';
-
+import { LoginComponent } from './components/login/login.component';
 export const routes: Routes = [
-  { path: '', redirectTo: 'events', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: 'login',
+    component: LoginComponent
+  },
   {
     path: 'events',
     component: EventListComponent,
