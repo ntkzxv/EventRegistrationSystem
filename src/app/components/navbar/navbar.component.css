@@ -182,6 +182,42 @@
   align-items: center;
 }
 
+/* ================= LOGIN BUTTON ================= */
+.login-nav-btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  gap: 6px;
+  height: 32px;
+  background: #EFF6FF;
+  border: 1px solid #BFDBFE;
+  border-radius: 6px;
+  font-family: 'Inter', 'Prompt', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 16px;
+  color: #2563EB;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.login-nav-btn:hover {
+  background: #2563EB;
+  color: #FFFFFF;
+  border-color: #2563EB;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.login-nav-btn:active {
+  transform: translateY(1px);
+}
+
 .user-profile-wrapper {
   position: relative;
 }
@@ -321,6 +357,27 @@
     gap: 12px;
   }
   .search-pill {
-    width: 140px;
+    width: 120px;
   }
+  .login-nav-btn {
+    padding: 0 10px;
+    font-size: 12px;
+  }
+}
+/* ================= logout ================= */
+.logout-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+
+  color: #DC2626;
+
+  font-family: 'Inter', 'Prompt', sans-serif;
+
+  cursor: pointer;
+}
+
+.logout-item:hover {
+  background: #FEF2F2;
+  color: #B91C1C;
 }

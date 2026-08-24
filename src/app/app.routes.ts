@@ -4,16 +4,37 @@ import { AdminEventManagementComponent } from './components/admin-event-manageme
 import { AdminDashboardComponent } from './components/admin-dashboard/admin-dashboard.component';
 import { EventListComponent } from './components/event-list/event-list.component';
 import { EventDetailComponent } from './components/event-detail/event-detail.component';
+<<<<<<< HEAD
+import { RegisterComponent } from './components/users/register.component';
 
+=======
+import { LoginComponent } from './components/login/login.component';
+>>>>>>> b453a5118d2c12bd7e21823bf198544358e990ed
 export const routes: Routes = [
-  { path: '', redirectTo: 'events', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
+  {
+    path: 'login',
+    component: LoginComponent
+  },
   {
     path: 'events',
     component: EventListComponent,
   },
   {
-  path: 'events/:id',
-  component: EventDetailComponent
+    path: 'events/:id',
+    component: EventDetailComponent,
+  },
+  {
+    path: 'register',
+    component: RegisterComponent,
+  },
+  {
+    path: 'users/register',
+    component: RegisterComponent,
+  },
+  {
+    path: 'users',
+    component: RegisterComponent,
   },
   {
     path: '',
