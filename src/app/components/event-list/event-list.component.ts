@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -29,67 +29,35 @@ export class EventListComponent {
 
   readonly pageSizeOptions = [6, 12, 24, 48];
 
-  protected readonly events = this.eventService.getEvents();
-
+  // เอาไว้ใช้เฉพาะ derive รายชื่อหมวดหมู่สำหรับปุ่มกรอง (ไม่ใช่ข้อมูลที่แสดงจริง)
   protected readonly categories = computed(() => {
-    const categories = this.events().map(
-      event => event.category
-    );
-
-    return [
-      'ทั้งหมด',
-      ...Array.from(new Set(categories))
-    ];
+    const names = this.eventService.getEvents()().map((event) => event.category);
+    return ['ทั้งหมด', ...Array.from(new Set(names))];
   });
 
-  protected readonly filteredEvents = computed(() => {
-    const query =
-      this.searchQuery().trim().toLowerCase();
+  // รายการกิจกรรมของหน้าปัจจุบัน (มาจาก backend แบบแบ่งหน้าจริง)
+  protected readonly paginatedEvents = signal<Event[]>([]);
+  private readonly totalCount = signal<number>(0);
 
-    const category =
-      this.selectedCategory();
-
-    return this.events().filter(event => {
-      const matchesSearch =
-        !query ||
-        event.title.toLowerCase().includes(query) ||
-        event.description.toLowerCase().includes(query) ||
-        event.location.toLowerCase().includes(query) ||
-        event.category.toLowerCase().includes(query);
-
-      const matchesCategory =
-        category === 'ทั้งหมด' ||
-        event.category === category;
-
-      return matchesSearch && matchesCategory;
-    });
-  });
+  // ใน template ใช้แค่ .length เพื่อแสดงจำนวนรวม — ค่านี้มาจาก backend โดยตรงแล้ว
+  protected readonly filteredEvents = computed(
+    () => Array.from({ length: this.totalCount() }) as Event[]
+  );
 
   protected readonly totalPages = computed(() => {
-    const total = this.filteredEvents().length;
     const size = Math.max(1, this.pageSize());
-    return Math.max(1, Math.ceil(total / size));
-  });
-
-  protected readonly paginatedEvents = computed(() => {
-    const events = this.filteredEvents();
-    const size = Math.max(1, this.pageSize());
-    const page = Math.min(this.currentPage(), this.totalPages());
-    const start = (page - 1) * size;
-    return events.slice(start, start + size);
+    return Math.max(1, Math.ceil(this.totalCount() / size));
   });
 
   protected readonly startIndex = computed(() => {
-    if (this.filteredEvents().length === 0) return 0;
+    if (this.totalCount() === 0) return 0;
     const size = Math.max(1, this.pageSize());
-    const page = Math.min(this.currentPage(), this.totalPages());
-    return (page - 1) * size + 1;
+    return (this.currentPage() - 1) * size + 1;
   });
 
   protected readonly endIndex = computed(() => {
     const size = Math.max(1, this.pageSize());
-    const page = Math.min(this.currentPage(), this.totalPages());
-    return Math.min(page * size, this.filteredEvents().length);
+    return Math.min(this.currentPage() * size, this.totalCount());
   });
 
   protected readonly pageNumbers = computed<(number | string)[]>(() => {
@@ -120,6 +88,26 @@ export class EventListComponent {
     pages.push(total);
     return pages;
   });
+
+  constructor() {
+    // ดึงข้อมูลใหม่จาก backend ทุกครั้งที่ search/หมวดหมู่/หน้า/ขนาดหน้าเปลี่ยน
+    effect(() => {
+      const search = this.searchQuery().trim();
+      const category = this.selectedCategory();
+      const page = this.currentPage();
+      const pageSize = this.pageSize();
+
+      const typeId =
+        category === 'ทั้งหมด' ? undefined : this.eventService.getEventTypeIdByName(category);
+
+      this.eventService
+        .searchEvents({ search: search || undefined, type: typeId, page, page_size: pageSize })
+        .subscribe((res) => {
+          this.paginatedEvents.set(res.data);
+          this.totalCount.set(res.total);
+        });
+    });
+  }
 
   onSearchChange(val: string) {
     this.searchQuery.set(val);

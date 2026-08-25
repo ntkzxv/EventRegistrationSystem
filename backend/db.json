@@ -72,8 +72,8 @@
     {
       "id": 1,
       "name": "True Digital Park",
-      "address": "101 ถ.สุขุมวิท แขวงบางจาก เขตพระโขนง กรุงเทพมหานคร",
-      "capacity": 500
+      "address": "สุขุมวิท",
+      "capacity": 100
     },
     {
       "id": 2,
@@ -388,6 +388,23 @@
       "end_date": "2026-08-29T15:00:00",
       "max_seats": 100,
       "status": "open"
+    },
+    {
+      "id": 18,
+      "name": "test01",
+      "description": "testtesttes",
+      "event_type_id": 1,
+      "venue_id": 1,
+      "organizer_name": "nice",
+      "organizer_contact_email": "nice@n.com",
+      "organizer_contact_phone": "123456789",
+      "start_date": "2026-08-26T09:00:00",
+      "end_date": "2026-08-26T17:00:00",
+      "max_seats": 100,
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2026-08-25T08:40:30.432Z",
+      "updated_at": "2026-08-25T08:40:30.432Z"
     }
   ],
   "registrations": [
@@ -506,7 +523,7 @@
   ],
   "_meta": {
     "nextUserId": 8,
-    "nextEventId": 18,
+    "nextEventId": 19,
     "nextVenueId": 14,
     "nextEventTypeId": 7,
     "nextRegistrationId": 17

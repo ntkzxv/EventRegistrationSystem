@@ -7,6 +7,7 @@ export interface Event {
   capacity: number;
   registeredCount: number;
   category: string;
+  status: 'open' | 'closed';
 }
 
 export interface Registration {

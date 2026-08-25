@@ -101,6 +101,12 @@ export class EventDetailComponent {
   }
 
 
+  isEventClosed(event: Event): boolean {
+
+    return event.status === 'closed';
+  }
+
+
   // ================= CATEGORY COLOR =================
 
   getCategoryColor(category: string): string {
@@ -132,6 +138,12 @@ export class EventDetailComponent {
 
     // Event เต็ม
     if (this.isFull(currentEvent)) {
+      return;
+    }
+
+
+    // Event ปิดรับสมัครแล้ว
+    if (this.isEventClosed(currentEvent)) {
       return;
     }
 

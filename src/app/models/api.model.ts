@@ -34,6 +34,15 @@ export interface ApiEventListResponse {
   data: ApiEventSummary[];
   total: number;
   page: number;
+  page_size?: number;
+}
+
+export interface EventSearchParams {
+  search?: string;
+  type?: number;
+  status?: string;
+  page?: number;
+  page_size?: number;
 }
 
 export interface ApiRegistrationItem {

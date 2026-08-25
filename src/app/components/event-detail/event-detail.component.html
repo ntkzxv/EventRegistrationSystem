@@ -289,6 +289,19 @@
 
             }
 
+            <!-- CLOSED -->
+            @else if (isEventClosed(item)) {
+
+              <button
+                type="button"
+                class="register-button disabled"
+                disabled
+              >
+                ปิดรับสมัครแล้ว
+              </button>
+
+            }
+
             <!-- CANCELLED -->
             @else if (registrationStatus() === 'CANCELLED') {
 

@@ -1,8 +1,8 @@
-import { Component, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, of, tap } from 'rxjs';
 
 import { NavbarComponent } from '../navbar/navbar.component';
@@ -148,63 +148,39 @@ export class AdminEventManagementComponent {
   private readonly venues = signal<ApiVenue[]>([]);
   protected readonly eventTypes = signal<ApiEventType[]>([]);
 
-  // Computed Categories
+  // Computed Categories (มาจาก event types ที่แอดมินดูแลอยู่ ไม่ใช่จากหน้าปัจจุบัน)
   protected readonly categories = computed(() => {
-    const fromEvents = this.events().map((e) => e.category).filter(Boolean);
-    const fromTypes = this.eventTypes().map((t) => t.name).filter(Boolean);
-    const unique = Array.from(new Set([...fromEvents, ...fromTypes]));
-    return ['ทุกหมวดหมู่', ...unique];
+    const names = this.eventTypes().map((t) => t.name).filter(Boolean);
+    return ['ทุกหมวดหมู่', ...names];
   });
 
-  // Filtered Events Computed Signal
-  protected readonly filteredEvents = computed(() => {
-    const list = this.events();
-    const query = this.searchQuery().trim().toLowerCase();
-    const cat = this.selectedCategory();
-    const status = this.selectedStatus();
+  private readonly totalCount = signal<number>(0);
 
-    return list.filter((item) => {
-      const matchesQuery =
-        !query ||
-        item.title.toLowerCase().includes(query) ||
-        item.location.toLowerCase().includes(query) ||
-        item.category.toLowerCase().includes(query);
-
-      const matchesCat = cat === 'ทุกหมวดหมู่' || item.category === cat;
-      const matchesStatus = status === 'ทุกสถานะ' || item.status === status;
-
-      return matchesQuery && matchesCat && matchesStatus;
-    });
-  });
+  // ใน template ใช้แค่ .length เพื่อแสดงจำนวนรวม — ค่านี้มาจาก backend โดยตรงแล้ว
+  protected readonly filteredEvents = computed(
+    () => Array.from({ length: this.totalCount() }) as AdminEventItem[]
+  );
 
   // Total Pages Computed Signal
   protected readonly totalPages = computed(() => {
-    const total = this.filteredEvents().length;
     const size = Math.max(1, this.pageSize() || 1);
-    return Math.max(1, Math.ceil(total / size));
+    return Math.max(1, Math.ceil(this.totalCount() / size));
   });
 
-  // Paginated Events Computed Signal
-  protected readonly paginatedEvents = computed(() => {
-    const list = this.filteredEvents();
-    const page = this.currentPage();
-    const size = Math.max(1, this.pageSize() || 1);
-    const start = (page - 1) * size;
-    return list.slice(start, start + size);
-  });
+  // รายการกิจกรรมของหน้าปัจจุบัน (มาจาก backend แบบแบ่งหน้าจริง)
+  protected readonly paginatedEvents = computed(() => this.events());
 
   // Start Index
   protected readonly startIndex = computed(() => {
-    if (this.filteredEvents().length === 0) return 0;
+    if (this.totalCount() === 0) return 0;
     const size = Math.max(1, this.pageSize() || 1);
     return (this.currentPage() - 1) * size + 1;
   });
 
   // End Index
   protected readonly endIndex = computed(() => {
-    const total = this.filteredEvents().length;
     const size = Math.max(1, this.pageSize() || 1);
-    return Math.min(this.currentPage() * size, total);
+    return Math.min(this.currentPage() * size, this.totalCount());
   });
 
   // Page Numbers List for rendering buttons
@@ -240,19 +216,77 @@ export class AdminEventManagementComponent {
   });
 
   constructor(private router: Router) {
-    this.loadEvents();
     this.loadLookups();
+
+    // ดึงข้อมูลใหม่จาก backend ทุกครั้งที่ search/หมวดหมู่/สถานะ/หน้า/ขนาดหน้าเปลี่ยน
+    effect(() => {
+      const search = this.searchQuery().trim();
+      const page = this.currentPage();
+      const pageSize = this.pageSize();
+      const typeId = this.resolveSelectedTypeId();
+      const statusParam = this.resolveSelectedStatusParam();
+
+      this.fetchEvents({
+        search: search || undefined,
+        type: typeId,
+        status: statusParam,
+        page,
+        page_size: pageSize,
+      });
+    });
   }
 
-  private loadEvents() {
-    this.http.get<ApiEventListResponse>(`${API_BASE_URL}/events`).subscribe((res) => {
-      this.events.set(res.data.map(mapAdminEvent));
+  private resolveSelectedTypeId(): number | undefined {
+    const category = this.selectedCategory();
+    if (category === 'ทุกหมวดหมู่') return undefined;
+    return this.eventTypes().find((t) => t.name === category)?.id;
+  }
 
-      // ถ้ามีแถวที่เปิดดูรายชื่อผู้ลงทะเบียนอยู่ ให้โหลดใหม่ (ไม่งั้นจะโดนล้างว่างไปตอน events reload)
-      const expandedId = this.expandedEventId();
-      if (expandedId) {
-        this.loadRegistrants(expandedId);
-      }
+  private resolveSelectedStatusParam(): string | undefined {
+    const status = this.selectedStatus();
+    if (status === 'เปิดรับ') return 'open';
+    if (status === 'ปิดรับ') return 'closed';
+    if (status === 'เต็ม') return 'full';
+    return undefined;
+  }
+
+  private fetchEvents(params: {
+    search?: string;
+    type?: number;
+    status?: string;
+    page: number;
+    page_size: number;
+  }) {
+    let httpParams = new HttpParams()
+      .set('page', String(params.page))
+      .set('page_size', String(params.page_size));
+
+    if (params.search) httpParams = httpParams.set('search', params.search);
+    if (params.type) httpParams = httpParams.set('type', String(params.type));
+    if (params.status) httpParams = httpParams.set('status', params.status);
+
+    this.http
+      .get<ApiEventListResponse>(`${API_BASE_URL}/events`, { params: httpParams })
+      .subscribe((res) => {
+        this.events.set(res.data.map(mapAdminEvent));
+        this.totalCount.set(res.total);
+
+        // ถ้ามีแถวที่เปิดดูรายชื่อผู้ลงทะเบียนอยู่ ให้โหลดใหม่ (ไม่งั้นจะโดนล้างว่างไปตอน events reload)
+        const expandedId = this.expandedEventId();
+        if (expandedId) {
+          this.loadRegistrants(expandedId);
+        }
+      });
+  }
+
+  // เรียกซ้ำด้วย filter/หน้าปัจจุบันเดิม ใช้หลังบันทึก/ลบ/เปลี่ยนสถานะกิจกรรม
+  private refetchCurrentPage() {
+    this.fetchEvents({
+      search: this.searchQuery().trim() || undefined,
+      type: this.resolveSelectedTypeId(),
+      status: this.resolveSelectedStatusParam(),
+      page: this.currentPage(),
+      page_size: this.pageSize(),
     });
   }
 
@@ -439,7 +473,7 @@ export class AdminEventManagementComponent {
       if (this.modalMode() === 'add') {
         this.http.post(`${API_BASE_URL}/admin/events`, payload).subscribe({
           next: () => {
-            this.loadEvents();
+            this.refetchCurrentPage();
             this.showToast('success', `เพิ่มกิจกรรม "${payload.name}" สำเร็จ`);
             this.closeEventModal();
           },
@@ -450,7 +484,7 @@ export class AdminEventManagementComponent {
 
         this.http.put(`${API_BASE_URL}/admin/events/${eventId}`, payload).subscribe({
           next: () => {
-            this.loadEvents();
+            this.refetchCurrentPage();
             this.showToast('success', 'บันทึกการแก้ไขกิจกรรมเรียบร้อย');
             this.closeEventModal();
           },
@@ -508,7 +542,7 @@ export class AdminEventManagementComponent {
     this.http
       .patch(`${API_BASE_URL}/admin/events/${event.id}/status`, { status: newStatus })
       .subscribe(() => {
-        this.loadEvents();
+        this.refetchCurrentPage();
         this.showToast(
           'info',
           `เปลี่ยนสถานะกิจกรรม "${event.title}" เป็น "${newStatus === 'open' ? 'เปิดรับ' : 'ปิดรับ'}" แล้ว`
@@ -581,7 +615,7 @@ export class AdminEventManagementComponent {
 
     this.http.delete(`${API_BASE_URL}/admin/events/${event.id}`).subscribe({
       next: () => {
-        this.loadEvents();
+        this.refetchCurrentPage();
         this.showToast('success', `ลบกิจกรรม "${event.title}" เรียบร้อยแล้ว`);
         this.closeDeleteModal();
       },
