@@ -5,7 +5,7 @@
     mode="user"
     activeTab="events"
     [searchQuery]="searchQuery()"
-    (searchQueryChange)="searchQuery.set($event)"
+    (searchQueryChange)="onSearchChange($event)"
   />
 
   <!-- ================= MAIN ================= -->
@@ -49,7 +49,7 @@
 
       <div class="event-grid">
 
-        @for (event of filteredEvents(); track event.id) {
+        @for (event of paginatedEvents(); track event.id) {
 
           <article class="event-card">
 
@@ -213,6 +213,76 @@
 
         }
 
+      </div>
+
+      <!-- Pagination Footer Bar -->
+      <div class="event-pagination-bar">
+        <div class="pagination-info">
+          <span>แสดง <strong>{{ startIndex() }}-{{ endIndex() }}</strong> จากทั้งหมด <strong>{{ filteredEvents().length }}</strong> รายการ</span>
+          <span class="pagination-page-indicator">(หน้า {{ currentPage() }} จาก {{ totalPages() }})</span>
+        </div>
+
+        <div class="pagination-controls">
+          <div class="page-size-selector-inline">
+            <label class="page-size-label">ต่อหน้า:</label>
+            <div class="page-size-input-wrapper">
+              <input 
+                type="number" 
+                class="page-size-input footer-page-size-input" 
+                [ngModel]="pageSize()" 
+                (ngModelChange)="onPageSizeChange($event)"
+                min="6"
+                title="ระบุจำนวนกิจกรรมที่ต้องการแสดงต่อหน้า (ขั้นต่ำ 6 รายการ)"
+              />
+              <span class="page-size-unit">รายการ</span>
+            </div>
+          </div>
+
+          <div class="pagination-buttons">
+            <button 
+              type="button" 
+              class="btn-page btn-prev"
+              [disabled]="currentPage() === 1"
+              (click)="prevPage()"
+              title="หน้าก่อนหน้า"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+              <span>ก่อนหน้า</span>
+            </button>
+
+            <div class="page-numbers-group">
+              @for (p of pageNumbers(); track $index) {
+                @if (p === '...') {
+                  <span class="page-ellipsis">...</span>
+                } @else {
+                  <button 
+                    type="button" 
+                    class="btn-page-number" 
+                    [class.active]="currentPage() === p"
+                    (click)="setPage(p)"
+                  >
+                    {{ p }}
+                  </button>
+                }
+              }
+            </div>
+
+            <button 
+              type="button" 
+              class="btn-page btn-next"
+              [disabled]="currentPage() === totalPages()"
+              (click)="nextPage()"
+              title="หน้าถัดไป"
+            >
+              <span>ถัดไป</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="9 18 15 12 9 6"></polyline>
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
 
     } @else {

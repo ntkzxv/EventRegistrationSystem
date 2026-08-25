@@ -24,6 +24,65 @@
       </button>
     </div>
 
+    <!-- Search & Filter Controls Toolbar -->
+    <div class="table-controls-bar">
+      <!-- Search Input Box -->
+      <div class="search-box">
+        <div class="search-icon-wrap">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
+        <input 
+          type="text" 
+          class="search-input"
+          [ngModel]="searchQuery()" 
+          (ngModelChange)="onSearchChange($event)"
+          placeholder="ค้นหาชื่อกิจกรรม, สถานที่, หรือหมวดหมู่..." 
+        />
+        @if (searchQuery()) {
+          <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="ล้างการค้นหา" title="ล้างการค้นหา">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+        }
+      </div>
+
+      <!-- Filters & Page Size -->
+      <div class="filter-controls-group">
+        <!-- Category Filter -->
+        <div class="filter-item">
+          <label class="filter-label">หมวดหมู่:</label>
+          <select 
+            class="filter-select" 
+            [ngModel]="selectedCategory()" 
+            (ngModelChange)="onCategoryChange($event)"
+          >
+            @for (cat of categories(); track cat) {
+              <option [value]="cat">{{ cat }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Status Filter -->
+        <div class="filter-item">
+          <label class="filter-label">สถานะ:</label>
+          <select 
+            class="filter-select" 
+            [ngModel]="selectedStatus()" 
+            (ngModelChange)="onStatusChange($event)"
+          >
+            @for (st of statusOptions; track st) {
+              <option [value]="st">{{ st }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
     <!-- Table Wrapper -->
     <div class="table-wrapper">
       <!-- Table Header -->
@@ -38,115 +97,264 @@
       </div>
 
       <!-- Events List (Rows & Expansion Panes) -->
-      @for (item of filteredEvents(); track item.id) {
-        <div class="row-and-expansion">
-          <!-- Main Event Table Row -->
-          <div 
-            class="table-row" 
-            [class.row-expanded]="expandedEventId() === item.id"
-            (click)="toggleExpand(item.id)"
-          >
-            <span class="td-col td-title">{{ item.title }}</span>
-            <span class="td-col td-date">{{ item.date }}</span>
-            <span class="td-col td-location">{{ item.location }}</span>
-            <span class="td-col td-category">{{ item.category }}</span>
-            
-            <span class="td-col td-capacity">
-              <strong>{{ item.registeredCount }}</strong> / {{ item.capacity }}
-            </span>
+      @if (filteredEvents().length > 0) {
+        @for (item of paginatedEvents(); track item.id) {
+          <div class="row-and-expansion">
+            <!-- Main Event Table Row -->
+            <div 
+              class="table-row" 
+              [class.row-expanded]="expandedEventId() === item.id"
+              (click)="toggleExpand(item.id)"
+            >
+              <span class="td-col td-title" [title]="item.title">{{ item.title }}</span>
+              <span class="td-col td-date">{{ item.date }}</span>
+              <span class="td-col td-location" [title]="item.location">{{ item.location }}</span>
+              <span class="td-col td-category">{{ item.category }}</span>
+              
+              <span class="td-col td-capacity">
+                <strong>{{ item.registeredCount }}</strong> / {{ item.capacity }}
+              </span>
 
-            <div class="td-col td-status">
-              <div class="badge-column">
-                @if (item.status === 'เปิดรับ') {
-                  <span class="badge badge-open">เปิดรับ</span>
-                } @else if (item.status === 'เต็ม') {
-                  <span class="badge badge-full">เต็ม</span>
-                } @else {
-                  <span class="badge badge-closed">ปิดรับ</span>
-                }
-              </div>
-            </div>
-
-            <!-- Actions Column -->
-            <div class="td-col td-actions" (click)="$event.stopPropagation()">
-              <div class="actions-column">
-                <button 
-                  type="button" 
-                  class="btn-toggle-registrants"
-                  [class.active]="expandedEventId() === item.id"
-                  (click)="toggleExpand(item.id)"
-                  [title]="expandedEventId() === item.id ? 'ปิดรายชื่อผู้สมัคร' : 'ดูรายชื่อผู้ลงทะเบียน'"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    @if (expandedEventId() === item.id) {
-                      <line x1="18" y1="6" x2="6" y2="18"></line>
-                      <line x1="6" y1="6" x2="18" y2="18"></line>
-                    } @else {
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    }
-                  </svg>
-                  <span>{{ expandedEventId() === item.id ? 'ปิด' : 'รายละเอียด' }}</span>
-                </button>
-                <button 
-                  type="button" 
-                  class="btn-edit"
-                  (click)="openEditEventModal(item, $event)"
-                  title="แก้ไขข้อมูลกิจกรรม"
-                >
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                  </svg>
-                  <span>แก้ไข</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Expanded Registrants Pane (Shown when expanded) -->
-          @if (expandedEventId() === item.id) {
-            <div class="expanded-registrants-pane animate-fade-in">
-              <div class="pane-header">
-                <h3 class="pane-title">รายชื่อผู้ลงทะเบียนเข้าร่วมกิจกรรม: {{ item.title }}</h3>
-                <span class="badge badge-count">ผู้ลงทะเบียนทั้งหมด {{ item.registeredCount }} คน</span>
-              </div>
-
-              <!-- Registrant Sub-Table -->
-              <div class="registrant-table">
-                <div class="sub-header">
-                  <span class="sub-th-name">ชื่อ - นามสกุล</span>
-                  <span class="sub-th-email">อีเมล</span>
-                  <span class="sub-th-date">วันที่ลงทะเบียน</span>
-                  <span class="sub-th-status">สถานะการรับรอง</span>
+              <div class="td-col td-status">
+                <div class="badge-column">
+                  @if (item.status === 'เปิดรับ') {
+                    <span class="badge badge-open">เปิดรับ</span>
+                  } @else if (item.status === 'เต็ม') {
+                    <span class="badge badge-full">เต็ม</span>
+                  } @else {
+                    <span class="badge badge-closed">ปิดรับ</span>
+                  }
                 </div>
+              </div>
 
-                @if (item.registrants.length > 0) {
-                  @for (reg of item.registrants; track reg.id; let last = $last) {
-                    <div class="sub-row" [class.no-border]="last">
-                      <span class="sub-td-name">{{ reg.name }}</span>
-                      <span class="sub-td-email">{{ reg.email }}</span>
-                      <span class="sub-td-date">{{ reg.registeredDate }}</span>
-                      <div class="sub-td-status">
-                        <div class="status-col">
-                          @if (reg.status === 'ยืนยันแล้ว') {
-                            <span class="badge badge-confirmed">ยืนยันแล้ว</span>
-                          } @else if (reg.status === 'รอดำเนินการ') {
-                            <span class="badge badge-pending">รอดำเนินการ</span>
+              <!-- Actions Column (3-Dots Menu) -->
+              <div class="td-col td-actions" (click)="$event.stopPropagation()">
+                <div class="action-menu-container">
+                  <button 
+                    type="button" 
+                    class="btn-action-dots"
+                    [class.active]="activeMenuEventId() === item.id"
+                    (click)="toggleRowMenu(item.id, $event)"
+                    title="ตัวเลือกจัดการกิจกรรม"
+                    aria-label="ตัวเลือกจัดการกิจกรรม"
+                  >
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <circle cx="12" cy="5" r="2.2"></circle>
+                      <circle cx="12" cy="12" r="2.2"></circle>
+                      <circle cx="12" cy="19" r="2.2"></circle>
+                    </svg>
+                  </button>
+
+                  @if (activeMenuEventId() === item.id) {
+                    <div class="action-dropdown-menu animate-scale-up" (click)="$event.stopPropagation()">
+                      <button 
+                        type="button" 
+                        class="dropdown-menu-item"
+                        (click)="toggleExpand(item.id); closeRowMenu()"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          @if (expandedEventId() === item.id) {
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
                           } @else {
-                            <span class="badge badge-cancelled">ยกเลิกแล้ว</span>
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
                           }
-                        </div>
-                      </div>
+                        </svg>
+                        <span>{{ expandedEventId() === item.id ? 'ซ่อนรายชื่อผู้สมัคร' : 'ดูรายชื่อผู้สมัคร' }}</span>
+                      </button>
+
+                      <button 
+                        type="button" 
+                        class="dropdown-menu-item"
+                        (click)="openEditEventModal(item, $event); closeRowMenu()"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                        </svg>
+                        <span>แก้ไขกิจกรรม</span>
+                      </button>
+
+                      <div class="dropdown-menu-divider"></div>
+
+                      <button 
+                        type="button" 
+                        class="dropdown-menu-item item-danger"
+                        (click)="openDeleteModal(item, $event); closeRowMenu()"
+                      >
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          <line x1="10" y1="11" x2="10" y2="17"></line>
+                          <line x1="14" y1="11" x2="14" y2="17"></line>
+                        </svg>
+                        <span>ลบกิจกรรม</span>
+                      </button>
                     </div>
                   }
-                } @else {
-                  <div class="sub-row-empty">
-                    <p class="empty-registrant-text">ยังไม่มีผู้ลงทะเบียนเข้าร่วมกิจกรรมนี้</p>
-                  </div>
-                }
+                </div>
               </div>
             </div>
+
+            <!-- Expanded Registrants Pane (Shown when expanded) -->
+            @if (expandedEventId() === item.id) {
+              <div class="expanded-registrants-pane animate-fade-in">
+                <!-- Event Meta & Organizer Card -->
+                <div class="event-organizer-card">
+                  @if (item.description) {
+                    <p class="event-desc-preview">{{ item.description }}</p>
+                  }
+                  <div class="organizer-info-row">
+                    <div class="info-pill">
+                      <span class="pill-label">ผู้จัดงาน:</span>
+                      <strong class="pill-value">{{ item.organizerName || 'สมาคม/ผู้จัดงาน' }}</strong>
+                    </div>
+                    <div class="info-pill">
+                      <span class="pill-label">อีเมลติดต่อ:</span>
+                      <strong class="pill-value">{{ item.organizerContactEmail || '-' }}</strong>
+                    </div>
+                    <div class="info-pill">
+                      <span class="pill-label">เบอร์โทรติดต่อ:</span>
+                      <strong class="pill-value">{{ item.organizerContactPhone || '-' }}</strong>
+                    </div>
+                    @if (item.locationAddress) {
+                      <div class="info-pill">
+                        <span class="pill-label">ที่อยู่สถานที่:</span>
+                        <strong class="pill-value">{{ item.locationAddress }}</strong>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <div class="pane-header">
+                  <h3 class="pane-title">รายชื่อผู้ลงทะเบียนเข้าร่วมกิจกรรม ({{ item.registeredCount }}/{{ item.capacity }} ที่นั่ง)</h3>
+                  <span class="badge badge-count">ผู้ลงทะเบียนทั้งหมด {{ item.registeredCount }} คน</span>
+                </div>
+
+                <!-- Registrant Sub-Table -->
+                <div class="registrant-table">
+                  <div class="sub-header">
+                    <span class="sub-th-name">ชื่อ - นามสกุล</span>
+                    <span class="sub-th-email">อีเมล</span>
+                    <span class="sub-th-date">วันที่ลงทะเบียน</span>
+                    <span class="sub-th-status">สถานะการรับรอง</span>
+                  </div>
+
+                  @if (item.registrants.length > 0) {
+                    @for (reg of item.registrants; track reg.id; let last = $last) {
+                      <div class="sub-row" [class.no-border]="last">
+                        <span class="sub-td-name">{{ reg.name }}</span>
+                        <span class="sub-td-email">{{ reg.email }}</span>
+                        <span class="sub-td-date">{{ reg.registeredDate }}</span>
+                        <div class="sub-td-status">
+                          <div class="status-col">
+                            @if (reg.status === 'ยืนยันแล้ว') {
+                              <span class="badge badge-confirmed">ยืนยันแล้ว</span>
+                            } @else if (reg.status === 'รอดำเนินการ') {
+                              <span class="badge badge-pending">รอดำเนินการ</span>
+                            } @else {
+                              <span class="badge badge-cancelled">ยกเลิกแล้ว</span>
+                            }
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  } @else {
+                    <div class="sub-row-empty">
+                      <p class="empty-registrant-text">ยังไม่มีผู้ลงทะเบียนเข้าร่วมกิจกรรมนี้</p>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Table Pagination Footer Bar -->
+        <div class="table-pagination-bar">
+          <div class="pagination-info">
+            <span>แสดง <strong>{{ startIndex() }}-{{ endIndex() }}</strong> จากทั้งหมด <strong>{{ filteredEvents().length }}</strong> รายการ</span>
+            <span class="pagination-page-indicator">(หน้า {{ currentPage() }} จาก {{ totalPages() }})</span>
+          </div>
+
+          <div class="pagination-controls">
+            <div class="page-size-selector-inline">
+              <label class="page-size-label">ต่อหน้า:</label>
+              <div class="page-size-input-wrapper">
+                <input 
+                  type="number" 
+                  class="page-size-input footer-page-size-input" 
+                  [ngModel]="pageSize()" 
+                  (ngModelChange)="onPageSizeChange($event)"
+                  min="1"
+                  step="1"
+                  placeholder="5"
+                />
+                <span class="page-size-unit">รายการ</span>
+              </div>
+            </div>
+
+            <div class="page-nav-buttons">
+              <button 
+                type="button" 
+                class="page-btn page-nav-btn"
+                [disabled]="currentPage() <= 1"
+                (click)="prevPage()"
+                title="หน้าก่อนหน้า"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                <span>ก่อนหน้า</span>
+              </button>
+
+              @for (page of pageNumbers(); track $index) {
+                @if (page === '...') {
+                  <span class="page-ellipsis">...</span>
+                } @else {
+                  <button 
+                    type="button" 
+                    class="page-btn page-number-btn"
+                    [class.active]="currentPage() === page"
+                    (click)="setPage(page)"
+                  >
+                    {{ page }}
+                  </button>
+                }
+              }
+
+              <button 
+                type="button" 
+                class="page-btn page-nav-btn"
+                [disabled]="currentPage() >= totalPages()"
+                (click)="nextPage()"
+                title="หน้าถัดไป"
+              >
+                <span>ถัดไป</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      } @else {
+        <!-- Empty State Row -->
+        <div class="table-empty-state">
+          <div class="empty-icon-wrap">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              <line x1="8" y1="11" x2="14" y2="11"></line>
+            </svg>
+          </div>
+          <h3 class="empty-title">ไม่พบข้อมูลกิจกรรมที่ตรงกับเงื่อนไข</h3>
+          <p class="empty-subtitle">ลองปรับคำค้นหาหรือเปลี่ยนตัวกรองเพื่อดูผลลัพธ์อื่น</p>
+          @if (searchQuery() || selectedCategory() !== 'ทุกหมวดหมู่' || selectedStatus() !== 'ทุกสถานะ') {
+            <button type="button" class="btn-reset-filters" (click)="clearSearch(); onCategoryChange('ทุกหมวดหมู่'); onStatusChange('ทุกสถานะ')">
+              ล้างตัวกรองทั้งหมด
+            </button>
           }
         </div>
       }
@@ -176,100 +384,321 @@
           {{ modalMode() === 'add' ? 'เพิ่มกิจกรรมใหม่' : 'แก้ไขข้อมูลกิจกรรม' }}
         </h2>
 
+        <!-- Step Indicator -->
+        <div class="modal-stepper">
+          <div 
+            class="step-badge" 
+            [class.active]="modalStep() === 1" 
+            [class.completed]="modalStep() > 1" 
+            (click)="prevStep()"
+            role="button"
+            tabindex="0"
+          >
+            <div class="step-num">1</div>
+            <span class="step-label">ข้อมูลกิจกรรมและสถานที่</span>
+          </div>
+          <div class="step-connector" [class.active]="modalStep() === 2"></div>
+          <div 
+            class="step-badge" 
+            [class.active]="modalStep() === 2" 
+            (click)="nextStep()"
+            role="button"
+            tabindex="0"
+          >
+            <div class="step-num">2</div>
+            <span class="step-label">ข้อมูลผู้จัดงาน (Organizer)</span>
+          </div>
+        </div>
+
         <form (submit)="$event.preventDefault(); saveEvent()" class="modal-form">
-          <div class="form-group">
-            <label class="form-label">ชื่อกิจกรรม *</label>
-            <input 
-              type="text" 
-              class="form-input" 
-              [ngModel]="formTitle()" 
-              (ngModelChange)="formTitle.set($event)"
-              name="title"
-              placeholder="ระบุชื่อกิจกรรม เช่น สัมมนา AI ในอนาคต"
-              required 
-            />
-          </div>
+          
+          <!-- STEP 1: ข้อมูลกิจกรรมและสถานที่ -->
+          @if (modalStep() === 1) {
+            <div class="step-content-fade">
+              <div class="form-group">
+                <label class="form-label">ชื่อกิจกรรม *</label>
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  [ngModel]="formTitle()" 
+                  (ngModelChange)="formTitle.set($event)"
+                  name="title"
+                  placeholder="ระบุชื่อกิจกรรม เช่น สัมมนา AI ในอนาคต"
+                  required 
+                />
+              </div>
 
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label">วันที่จัดงาน *</label>
-              <input 
-                type="text" 
-                class="form-input" 
-                [ngModel]="formDate()" 
-                (ngModelChange)="formDate.set($event)"
-                name="date"
-                placeholder="เช่น 24 พ.ย. 2024" 
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">หมวดหมู่ *</label>
-              <select 
-                class="form-select" 
-                [ngModel]="formCategory()" 
-                (ngModelChange)="formCategory.set($event)"
-                name="category"
-              >
-                <option value="เทคโนโลยี">เทคโนโลยี</option>
-                <option value="การออกแบบ">การออกแบบ</option>
-                <option value="กีฬา">กีฬา</option>
-                <option value="ดนตรี">ดนตรี</option>
-                <option value="อาหารและเครื่องดื่ม">อาหารและเครื่องดื่ม</option>
-              </select>
-            </div>
-          </div>
+              <div class="form-group">
+                <label class="form-label">รายละเอียดกิจกรรม</label>
+                <textarea 
+                  class="form-textarea" 
+                  [ngModel]="formDescription()" 
+                  (ngModelChange)="formDescription.set($event)"
+                  name="description"
+                  rows="3"
+                  placeholder="ระบุรายละเอียดกิจกรรม หัวข้อ หรือเนื้อหาสำคัญ..."
+                ></textarea>
+              </div>
 
-          <div class="form-group">
-            <label class="form-label">สถานที่จัดงาน *</label>
-            <input 
-              type="text" 
-              class="form-input" 
-              [ngModel]="formLocation()" 
-              (ngModelChange)="formLocation.set($event)"
-              name="location"
-              placeholder="เช่น True Digital Park, สวนลุมพินี"
-              required 
-            />
-          </div>
+              <div class="form-row-2 align-parallel">
+                <div class="form-group">
+                  <label class="form-label">วันที่จัดงาน</label>
+                  <input 
+                    type="date" 
+                    class="form-input date-picker-input" 
+                    [ngModel]="formDate()" 
+                    (ngModelChange)="formDate.set($event)"
+                    name="date"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">เวลาจัดงาน (เริ่ม - สิ้นสุด)</label>
+                  <div class="time-inputs-row">
+                    <input 
+                      type="time" 
+                      class="form-input time-input" 
+                      [ngModel]="formStartTime()" 
+                      (ngModelChange)="formStartTime.set($event)"
+                      name="startTime"
+                      title="เวลาเริ่มงาน"
+                    />
+                    <span class="time-sep">-</span>
+                    <input 
+                      type="time" 
+                      class="form-input time-input" 
+                      [ngModel]="formEndTime()" 
+                      (ngModelChange)="formEndTime.set($event)"
+                      name="endTime"
+                      title="เวลาสิ้นสุดงาน"
+                    />
+                  </div>
+                </div>
+              </div>
 
-          <div class="form-row-2">
-            <div class="form-group">
-              <label class="form-label">จำนวนที่นั่งทั้งหมด *</label>
-              <input 
-                type="number" 
-                class="form-input" 
-                [ngModel]="formCapacity()" 
-                (ngModelChange)="formCapacity.set($event)"
-                name="capacity"
-                min="1" 
-                required
-              />
-            </div>
-            <div class="form-group">
-              <label class="form-label">สถานะกิจกรรม</label>
-              <select 
-                class="form-select" 
-                [ngModel]="formStatus()" 
-                (ngModelChange)="formStatus.set($event)"
-                name="status"
-              >
-                <option value="เปิดรับ">เปิดรับ</option>
-                <option value="ปิดรับ">ปิดรับ</option>
-                <option value="เต็ม">เต็ม</option>
-              </select>
-            </div>
-          </div>
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">หมวดหมู่กิจกรรม *</label>
+                  <select 
+                    class="form-select" 
+                    [ngModel]="formCategory()" 
+                    (ngModelChange)="formCategory.set($event)"
+                    name="category"
+                  >
+                    <option value="เทคโนโลยี">เทคโนโลยี</option>
+                    <option value="การออกแบบ">การออกแบบ</option>
+                    <option value="กีฬา">กีฬา</option>
+                    <option value="ดนตรี">ดนตรี</option>
+                    <option value="อาหารและเครื่องดื่ม">อาหารและเครื่องดื่ม</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">สถานะกิจกรรม</label>
+                  <select 
+                    class="form-select" 
+                    [ngModel]="formStatus()" 
+                    (ngModelChange)="formStatus.set($event)"
+                    name="status"
+                  >
+                    <option value="เปิดรับ">เปิดรับ</option>
+                    <option value="ปิดรับ">ปิดรับ</option>
+                    <option value="เต็ม">เต็ม</option>
+                  </select>
+                </div>
+              </div>
 
-          <div class="modal-actions">
-            <button type="button" class="btn-cancel-modal" (click)="closeEventModal()">
-              ยกเลิก
-            </button>
-            <button type="submit" class="btn-submit-modal">
-              {{ modalMode() === 'add' ? 'บันทึกและสร้างกิจกรรม' : 'บันทึกการแก้ไข' }}
-            </button>
-          </div>
+              <!-- Venue / Location Section -->
+              <div class="form-divider-title">
+                <span>สถานที่จัดงาน (Venue & Capacity)</span>
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">ชื่อสถานที่จัดงาน *</label>
+                  <input 
+                    type="text" 
+                    class="form-input" 
+                    [ngModel]="formLocation()" 
+                    (ngModelChange)="formLocation.set($event)"
+                    name="location"
+                    placeholder="เช่น True Digital Park, BITEC Bangna"
+                    required 
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">ความจุ / จำนวนที่นั่งทั้งหมด *</label>
+                  <input 
+                    type="number" 
+                    class="form-input" 
+                    [ngModel]="formCapacity()" 
+                    (ngModelChange)="formCapacity.set($event)"
+                    name="capacity"
+                    min="1" 
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">ที่อยู่สถานที่จัดงาน (Address)</label>
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  [ngModel]="formLocationAddress()" 
+                  (ngModelChange)="formLocationAddress.set($event)"
+                  name="locationAddress"
+                  placeholder="เช่น 101 ถ.สุขุมวิท แขวงบางจาก เขตพระโขนง กรุงเทพฯ" 
+                />
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn-cancel-modal" (click)="closeEventModal()">
+                  ยกเลิก
+                </button>
+                <button type="button" class="btn-next-step" (click)="nextStep()">
+                  <span>ขั้นตอนถัดไป (ข้อมูลผู้จัดงาน)</span>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          }
+
+          <!-- STEP 2: ข้อมูลผู้จัดงาน (Organizer) & ยืนยัน -->
+          @if (modalStep() === 2) {
+            <div class="step-content-fade">
+              <div class="step-info-callout">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="16" x2="12" y2="12"></line>
+                  <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                </svg>
+                <span>กรุณาระบุข้อมูลผู้จัดงาน เพื่อให้ผู้เข้าร่วมสามารถติดต่อสอบถามรายละเอียดได้</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">ชื่อผู้จัดงาน / หน่วยงาน</label>
+                <input 
+                  type="text" 
+                  class="form-input" 
+                  [ngModel]="formOrganizerName()" 
+                  (ngModelChange)="formOrganizerName.set($event)"
+                  name="organizerName"
+                  placeholder="เช่น สมาคมนวัตกรรมและเทคโนโลยีไทย (TITA)" 
+                />
+              </div>
+
+              <div class="form-row-2">
+                <div class="form-group">
+                  <label class="form-label">อีเมลติดต่อผู้จัดงาน</label>
+                  <input 
+                    type="email" 
+                    class="form-input" 
+                    [ngModel]="formOrganizerEmail()" 
+                    (ngModelChange)="formOrganizerEmail.set($event)"
+                    name="organizerEmail"
+                    placeholder="เช่น contact@organizer.co.th" 
+                  />
+                </div>
+                <div class="form-group">
+                  <label class="form-label">เบอร์โทรติดต่อผู้จัดงาน</label>
+                  <input 
+                    type="tel" 
+                    class="form-input" 
+                    [ngModel]="formOrganizerPhone()" 
+                    (ngModelChange)="formOrganizerPhone.set($event)"
+                    name="organizerPhone"
+                    placeholder="เช่น 02-123-4567" 
+                  />
+                </div>
+              </div>
+
+              <!-- Summary Card Preview -->
+              <div class="event-summary-preview">
+                <div class="summary-preview-title">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                  </svg>
+                  <span>สรุปข้อมูลกิจกรรมที่จะบันทึก</span>
+                </div>
+                <div class="summary-preview-grid">
+                  <div class="summary-item">
+                    <span class="s-label">กิจกรรม:</span>
+                    <span class="s-value">{{ formTitle() || '-' }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="s-label">หมวดหมู่ / สถานะ:</span>
+                    <span class="s-value">{{ formCategory() }} • {{ formStatus() }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="s-label">วันที่และเวลา:</span>
+                    <span class="s-value">{{ formDate() }} ({{ formStartTime() }} - {{ formEndTime() }})</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="s-label">สถานที่ & ความจุ:</span>
+                    <span class="s-value">{{ formLocation() || '-' }} ({{ formCapacity() }} ที่นั่ง)</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="modal-actions">
+                <button type="button" class="btn-prev-step" (click)="prevStep()">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                  </svg>
+                  <span>ย้อนกลับ</span>
+                </button>
+                <button type="submit" class="btn-submit-modal">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                  </svg>
+                  <span>{{ modalMode() === 'add' ? 'ยืนยันและสร้างกิจกรรม' : 'ยืนยันและบันทึกการแก้ไข' }}</span>
+                </button>
+              </div>
+            </div>
+          }
         </form>
+      </div>
+    </div>
+  }
+
+  <!-- ================= DELETE CONFIRMATION MODAL ================= -->
+  @if (isDeleteModalOpen() && eventToDelete()) {
+    <div class="modal-backdrop" (click)="closeDeleteModal()">
+      <div class="delete-modal-card animate-scale-up" (click)="$event.stopPropagation()">
+        <button type="button" class="modal-close-btn" (click)="closeDeleteModal()" aria-label="ปิดหน้าต่าง">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#6B7280" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+
+        <div class="delete-icon-circle">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y2="17"></line>
+            <line x1="14" y1="11" x2="14" y2="17"></line>
+          </svg>
+        </div>
+
+        <h3 class="delete-modal-title">ยืนยันการลบกิจกรรม</h3>
+        <p class="delete-modal-desc">
+          คุณแน่ใจหรือไม่ว่าต้องการลบกิจกรรม <strong>"{{ eventToDelete()?.title }}"</strong>?
+          <br />
+          ข้อมูลผู้ลงทะเบียนทั้งหมดในกิจกรรมนี้จะถูกลบด้วย และไม่สามารถกู้คืนได้
+        </p>
+
+        <div class="delete-modal-actions">
+          <button type="button" class="btn-cancel-modal" (click)="closeDeleteModal()">
+            ยกเลิก
+          </button>
+          <button type="button" class="btn-confirm-delete" (click)="confirmDelete()">
+            ยืนยันการลบ
+          </button>
+        </div>
       </div>
     </div>
   }

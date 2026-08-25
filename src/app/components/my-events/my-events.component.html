@@ -16,7 +16,7 @@
 
       <!-- Status Filter Tabs -->
       <div class="status-filter-pills" role="tablist">
-        @for (status of ['ทั้งหมด', 'ยืนยันแล้ว', 'รอดำเนินการ', 'ยกเลิกแล้ว']; track status) {
+        @for (status of ['ทั้งหมด', 'ยืนยันแล้ว', 'ยกเลิกแล้ว']; track status) {
           <button 
             type="button" 
             role="tab"
@@ -64,8 +64,6 @@
               <div class="badge-column">
                 @if (item.status === 'ยืนยันแล้ว') {
                   <span class="badge badge-confirmed">ยืนยันแล้ว</span>
-                } @else if (item.status === 'รอดำเนินการ') {
-                  <span class="badge badge-pending">รอดำเนินการ</span>
                 } @else {
                   <span class="badge badge-cancelled">ยกเลิกแล้ว</span>
                 }
@@ -142,8 +140,6 @@
           <div class="modal-badge-row">
             @if (selectedEvent()!.status === 'ยืนยันแล้ว') {
               <span class="badge badge-confirmed">ยืนยันแล้ว</span>
-            } @else if (selectedEvent()!.status === 'รอดำเนินการ') {
-              <span class="badge badge-pending">รอดำเนินการ</span>
             } @else {
               <span class="badge badge-cancelled">ยกเลิกแล้ว</span>
             }

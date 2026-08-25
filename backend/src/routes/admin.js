@@ -12,20 +12,24 @@ router.use(authenticateToken, requireAdmin);
 router.post('/events', (req, res) => {
   const db = readDb();
   const body = req.body || {};
+  const now = new Date().toISOString();
 
   const event = {
     id: nextId(db, 'nextEventId'),
-    name: body.name,
-    description: body.description,
-    event_type_id: Number(body.event_type_id),
-    venue_id: Number(body.venue_id),
-    organizer_name: body.organizer_name,
-    organizer_contact_email: body.organizer_contact_email,
-    organizer_contact_phone: body.organizer_contact_phone,
+    name: body.name || '',
+    description: body.description || '',
+    event_type_id: Number(body.event_type_id) || 1,
+    venue_id: Number(body.venue_id) || 1,
+    organizer_name: body.organizer_name || 'EventHub Organizer',
+    organizer_contact_email: body.organizer_contact_email || (req.user?.email || 'admin@eventhub.com'),
+    organizer_contact_phone: body.organizer_contact_phone || '02-123-4567',
     start_date: body.start_date,
     end_date: body.end_date,
-    max_seats: Number(body.max_seats),
-    status: 'open',
+    max_seats: Number(body.max_seats) || 100,
+    status: body.status || 'open',
+    created_by: req.user ? req.user.id : (body.created_by || 1),
+    created_at: now,
+    updated_at: now,
   };
 
   db.events.push(event);
@@ -56,6 +60,8 @@ router.put('/events/:id', (req, res) => {
         : value;
     }
   }
+
+  event.updated_at = new Date().toISOString();
 
   writeDb(db);
 

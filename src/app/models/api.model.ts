@@ -17,11 +17,17 @@ export interface ApiEventSummary {
   description?: string;
   event_type: ApiEventType | null;
   venue: ApiVenue | null;
+  organizer_name?: string;
+  organizer_contact_email?: string;
+  organizer_contact_phone?: string;
   start_date: string;
   end_date: string;
   max_seats: number;
   seats_remaining: number;
-  status: 'open' | 'closed';
+  status: 'open' | 'closed' | 'full' | 'draft';
+  created_by?: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface ApiEventListResponse {

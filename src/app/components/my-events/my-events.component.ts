@@ -12,7 +12,7 @@ export interface MyEventItem {
   title: string;
   date: string;
   location: string;
-  status: 'ยืนยันแล้ว' | 'รอดำเนินการ' | 'ยกเลิกแล้ว';
+  status: 'ยืนยันแล้ว' | 'ยกเลิกแล้ว';
   ticketCode?: string;
   category?: string;
   description?: string;
@@ -103,14 +103,7 @@ export class MyEventsComponent {
       title: event.title,
       date: event.date,
       location: event.location,
-
-      status:
-        registration.status === 'CONFIRMED'
-          ? 'ยืนยันแล้ว'
-          : registration.status === 'PENDING'
-            ? 'รอดำเนินการ'
-            : 'ยกเลิกแล้ว',
-
+      status: registration.status === 'CONFIRMED' ? 'ยืนยันแล้ว' : 'ยกเลิกแล้ว',
       ticketCode: `EVH-${registration.id.toUpperCase()}`,
       category: event.category,
       description: event.description,
@@ -218,28 +211,29 @@ export class MyEventsComponent {
   }
 
   onReRegister(event: MyEventItem) {
-  const originalEvent = this.allEvents().find(
-    e => e.id === event.id
-  );
-
-  if (!originalEvent) return;
-
-  if (this.eventService.isEventRegistered(event.id)) {
-    return;
-  }
-
-  this.eventService.registerForEvent(event.id).subscribe((result) => {
-
-    this.showToast(
-      result.success ? 'success' : 'error',
-      result.success
-        ? `สมัครเข้าร่วมกิจกรรม "${event.title}" ใหม่อีกครั้งสำเร็จ`
-        : (result.message ?? 'สมัครเข้าร่วมกิจกรรมไม่สำเร็จ')
+    const originalEvent = this.allEvents().find(
+      e => e.id === event.id
     );
 
-    this.closeDetailModal();
-  });
-}
+    if (!originalEvent) return;
+
+    if (this.eventService.isEventRegistered(event.id)) {
+      this.showToast('info', 'คุณได้สมัครกิจกรรมนี้ไปแล้ว ไม่สามารถสมัครซ้ำได้');
+      this.closeDetailModal();
+      return;
+    }
+
+    this.eventService.registerForEvent(event.id).subscribe((result) => {
+      this.showToast(
+        result.success ? 'success' : 'info',
+        result.success
+          ? `สมัครเข้าร่วมกิจกรรม "${event.title}" ใหม่อีกครั้งสำเร็จ`
+          : (result.message ?? 'คุณได้สมัครกิจกรรมนี้ไปแล้ว ไม่สามารถสมัครซ้ำได้')
+      );
+
+      this.closeDetailModal();
+    });
+  }
   private showToast(
     type: 'success' | 'error' | 'info',
     message: string

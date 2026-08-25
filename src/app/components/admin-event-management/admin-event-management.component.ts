@@ -1,13 +1,13 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, of, tap } from 'rxjs';
+import { Observable, catchError, map, of, tap } from 'rxjs';
 
 import { NavbarComponent } from '../navbar/navbar.component';
 import { API_BASE_URL } from '../../core/api.constants';
-import { formatThaiDate, parseThaiDateToIsoRange } from '../../core/thai-date';
+import { formatThaiDate, formatThaiTime, parseThaiDateToIsoRange } from '../../core/thai-date';
 import {
   ApiEventListResponse,
   ApiEventSummary,
@@ -26,12 +26,19 @@ export interface RegistrantItem {
 export interface AdminEventItem {
   id: string;
   title: string;
+  description: string;
   date: string;
+  startDate?: string;
+  endDate?: string;
   location: string;
+  locationAddress: string;
   category: string;
   registeredCount: number;
   capacity: number;
   status: 'เปิดรับ' | 'ปิดรับ' | 'เต็ม';
+  organizerName: string;
+  organizerContactEmail: string;
+  organizerContactPhone: string;
   registrants: RegistrantItem[];
 }
 
@@ -50,17 +57,24 @@ interface ToastState {
 
 function mapAdminEvent(api: ApiEventSummary): AdminEventItem {
   const status: AdminEventItem['status'] =
-    api.status === 'closed' ? 'ปิดรับ' : api.seats_remaining <= 0 ? 'เต็ม' : 'เปิดรับ';
+    api.status === 'closed' ? 'ปิดรับ' : (api.status === 'full' || api.seats_remaining <= 0) ? 'เต็ม' : 'เปิดรับ';
 
   return {
     id: String(api.id),
     title: api.name,
+    description: api.description || '',
     date: formatThaiDate(api.start_date),
+    startDate: api.start_date,
+    endDate: api.end_date,
     location: api.venue?.name ?? '',
+    locationAddress: api.venue?.address ?? '',
     category: api.event_type?.name ?? '',
     registeredCount: Math.max(0, api.max_seats - api.seats_remaining),
     capacity: api.max_seats,
     status,
+    organizerName: api.organizer_name || '',
+    organizerContactEmail: api.organizer_contact_email || '',
+    organizerContactPhone: api.organizer_contact_phone || '',
     registrants: [],
   };
 }
@@ -81,23 +95,44 @@ export class AdminEventManagementComponent {
   // Expanded event ID
   protected readonly expandedEventId = signal<string | null>(null);
 
+  // 3-Dots Action Menu Active Event ID
+  protected readonly activeMenuEventId = signal<string | null>(null);
+
   // Search and filter
   protected readonly searchQuery = signal<string>('');
   protected readonly selectedCategory = signal<string>('ทุกหมวดหมู่');
+  protected readonly selectedStatus = signal<string>('ทุกสถานะ');
+  protected readonly pageSize = signal<number>(5);
+  protected readonly currentPage = signal<number>(1);
   protected readonly isUserMenuOpen = signal<boolean>(false);
+
+  readonly pageSizeOptions = [5, 10, 20, 50];
+  readonly statusOptions = ['ทุกสถานะ', 'เปิดรับ', 'ปิดรับ', 'เต็ม'];
 
   // Modal State for Add / Edit Event
   protected readonly isEventModalOpen = signal<boolean>(false);
   protected readonly modalMode = signal<'add' | 'edit'>('add');
   protected readonly editingEventId = signal<string | null>(null);
+  protected readonly modalStep = signal<1 | 2>(1);
+
+  // Modal State for Delete Event
+  protected readonly isDeleteModalOpen = signal<boolean>(false);
+  protected readonly eventToDelete = signal<AdminEventItem | null>(null);
 
   // Modal Form Inputs
   protected readonly formTitle = signal<string>('');
+  protected readonly formDescription = signal<string>('');
   protected readonly formDate = signal<string>('');
+  protected readonly formStartTime = signal<string>('09:00');
+  protected readonly formEndTime = signal<string>('17:00');
   protected readonly formLocation = signal<string>('');
+  protected readonly formLocationAddress = signal<string>('');
   protected readonly formCategory = signal<string>('เทคโนโลยี');
   protected readonly formCapacity = signal<number>(100);
   protected readonly formStatus = signal<'เปิดรับ' | 'ปิดรับ' | 'เต็ม'>('เปิดรับ');
+  protected readonly formOrganizerName = signal<string>('');
+  protected readonly formOrganizerEmail = signal<string>('');
+  protected readonly formOrganizerPhone = signal<string>('');
 
   // Toast State
   protected readonly toast = signal<ToastState>({
@@ -111,13 +146,22 @@ export class AdminEventManagementComponent {
 
   // Lookup tables สำหรับแปลงชื่อ <-> id ตอนบันทึกฟอร์ม
   private readonly venues = signal<ApiVenue[]>([]);
-  private readonly eventTypes = signal<ApiEventType[]>([]);
+  protected readonly eventTypes = signal<ApiEventType[]>([]);
+
+  // Computed Categories
+  protected readonly categories = computed(() => {
+    const fromEvents = this.events().map((e) => e.category).filter(Boolean);
+    const fromTypes = this.eventTypes().map((t) => t.name).filter(Boolean);
+    const unique = Array.from(new Set([...fromEvents, ...fromTypes]));
+    return ['ทุกหมวดหมู่', ...unique];
+  });
 
   // Filtered Events Computed Signal
   protected readonly filteredEvents = computed(() => {
     const list = this.events();
     const query = this.searchQuery().trim().toLowerCase();
     const cat = this.selectedCategory();
+    const status = this.selectedStatus();
 
     return list.filter((item) => {
       const matchesQuery =
@@ -127,9 +171,72 @@ export class AdminEventManagementComponent {
         item.category.toLowerCase().includes(query);
 
       const matchesCat = cat === 'ทุกหมวดหมู่' || item.category === cat;
+      const matchesStatus = status === 'ทุกสถานะ' || item.status === status;
 
-      return matchesQuery && matchesCat;
+      return matchesQuery && matchesCat && matchesStatus;
     });
+  });
+
+  // Total Pages Computed Signal
+  protected readonly totalPages = computed(() => {
+    const total = this.filteredEvents().length;
+    const size = Math.max(1, this.pageSize() || 1);
+    return Math.max(1, Math.ceil(total / size));
+  });
+
+  // Paginated Events Computed Signal
+  protected readonly paginatedEvents = computed(() => {
+    const list = this.filteredEvents();
+    const page = this.currentPage();
+    const size = Math.max(1, this.pageSize() || 1);
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  // Start Index
+  protected readonly startIndex = computed(() => {
+    if (this.filteredEvents().length === 0) return 0;
+    const size = Math.max(1, this.pageSize() || 1);
+    return (this.currentPage() - 1) * size + 1;
+  });
+
+  // End Index
+  protected readonly endIndex = computed(() => {
+    const total = this.filteredEvents().length;
+    const size = Math.max(1, this.pageSize() || 1);
+    return Math.min(this.currentPage() * size, total);
+  });
+
+  // Page Numbers List for rendering buttons
+  protected readonly pageNumbers = computed(() => {
+    const total = this.totalPages();
+    const current = this.currentPage();
+    const pages: (number | string)[] = [];
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) {
+        pages.push(i);
+      }
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) pages.push(i);
+        pages.push('...');
+        pages.push(total);
+      } else if (current >= total - 3) {
+        pages.push(1);
+        pages.push('...');
+        for (let i = total - 4; i <= total; i++) pages.push(i);
+      } else {
+        pages.push(1);
+        pages.push('...');
+        pages.push(current - 1);
+        pages.push(current);
+        pages.push(current + 1);
+        pages.push('...');
+        pages.push(total);
+      }
+    }
+    return pages;
   });
 
   constructor(private router: Router) {
@@ -187,6 +294,20 @@ export class AdminEventManagementComponent {
     this.loadRegistrants(eventId);
   }
 
+  toggleRowMenu(eventId: string, evt: Event) {
+    evt.stopPropagation();
+    this.activeMenuEventId.update((current) => (current === eventId ? null : eventId));
+  }
+
+  closeRowMenu() {
+    this.activeMenuEventId.set(null);
+  }
+
+  @HostListener('document:click')
+  onDocumentClick() {
+    this.activeMenuEventId.set(null);
+  }
+
   toggleUserMenu() {
     this.isUserMenuOpen.update((v) => !v);
   }
@@ -198,12 +319,21 @@ export class AdminEventManagementComponent {
   openAddEventModal() {
     this.modalMode.set('add');
     this.editingEventId.set(null);
+    this.modalStep.set(1);
     this.formTitle.set('');
-    this.formDate.set('');
+    this.formDescription.set('');
+    const today = new Date().toISOString().slice(0, 10);
+    this.formDate.set(today);
+    this.formStartTime.set('09:00');
+    this.formEndTime.set('17:00');
     this.formLocation.set('');
+    this.formLocationAddress.set('');
     this.formCategory.set('เทคโนโลยี');
     this.formCapacity.set(100);
     this.formStatus.set('เปิดรับ');
+    this.formOrganizerName.set('');
+    this.formOrganizerEmail.set('');
+    this.formOrganizerPhone.set('');
     this.isEventModalOpen.set(true);
   }
 
@@ -211,41 +341,99 @@ export class AdminEventManagementComponent {
     evt.stopPropagation();
     this.modalMode.set('edit');
     this.editingEventId.set(event.id);
+    this.modalStep.set(1);
     this.formTitle.set(event.title);
-    this.formDate.set(event.date);
+    this.formDescription.set(event.description || '');
+    const isoDate = event.startDate ? event.startDate.slice(0, 10) : '';
+    this.formDate.set(isoDate || event.date);
+    this.formStartTime.set(event.startDate ? formatThaiTime(event.startDate) : '09:00');
+    this.formEndTime.set(event.endDate ? formatThaiTime(event.endDate) : '17:00');
     this.formLocation.set(event.location);
+    this.formLocationAddress.set(event.locationAddress || '');
     this.formCategory.set(event.category);
     this.formCapacity.set(event.capacity);
     this.formStatus.set(event.status);
+    this.formOrganizerName.set(event.organizerName || '');
+    this.formOrganizerEmail.set(event.organizerContactEmail || '');
+    this.formOrganizerPhone.set(event.organizerContactPhone || '');
     this.isEventModalOpen.set(true);
   }
 
   closeEventModal() {
     this.isEventModalOpen.set(false);
+    this.modalStep.set(1);
+  }
+
+  nextStep() {
+    if (!this.formTitle().trim()) {
+      this.showToast('error', 'กรุณากรอกชื่อกิจกรรม');
+      return;
+    }
+
+    if (!this.formDate()) {
+      this.showToast('error', 'กรุณาระบุวันที่จัดงาน');
+      return;
+    }
+
+    if (!this.formLocation().trim()) {
+      this.showToast('error', 'กรุณาระบุชื่อสถานที่จัดงาน');
+      return;
+    }
+
+    const range = parseThaiDateToIsoRange(
+      this.formDate(),
+      this.formStartTime(),
+      this.formEndTime()
+    );
+
+    if (!range) {
+      this.showToast('error', 'รูปแบบวันที่ไม่ถูกต้อง กรุณาใช้รูปแบบ dd/mm/yyyy หรือเลือกจากปฏิทิน');
+      return;
+    }
+
+    this.modalStep.set(2);
+  }
+
+  prevStep() {
+    this.modalStep.set(1);
   }
 
   saveEvent() {
     if (!this.formTitle() || !this.formDate() || !this.formLocation()) {
-      this.showToast('error', 'กรุณากรอกข้อมูลให้ครบถ้วน');
+      this.showToast('error', 'กรุณากรอกข้อมูลที่จำเป็นให้ครบถ้วน');
       return;
     }
 
-    const range = parseThaiDateToIsoRange(this.formDate());
+    const range = parseThaiDateToIsoRange(
+      this.formDate(),
+      this.formStartTime(),
+      this.formEndTime()
+    );
 
     if (!range) {
-      this.showToast('error', 'รูปแบบวันที่ไม่ถูกต้อง กรุณาใช้รูปแบบ เช่น 24 พ.ย. 2024');
+      this.showToast('error', 'รูปแบบวันที่ไม่ถูกต้อง กรุณาใช้รูปแบบ dd/mm/yyyy หรือเลือกจากปฏิทิน');
       return;
     }
 
-    this.resolveVenueId(this.formLocation()).subscribe((venueId) => {
+    const capacityNum = Number(this.formCapacity()) || 100;
+
+    this.resolveVenueId(
+      this.formLocation(),
+      this.formLocationAddress(),
+      capacityNum
+    ).subscribe((venueId) => {
       const payload = {
         name: this.formTitle(),
+        description: this.formDescription(),
         event_type_id: this.resolveEventTypeId(this.formCategory()),
         venue_id: venueId,
         start_date: range.start,
         end_date: range.end,
-        max_seats: Number(this.formCapacity()),
-        status: this.formStatus() === 'ปิดรับ' ? 'closed' : 'open',
+        max_seats: capacityNum,
+        status: this.formStatus() === 'ปิดรับ' ? 'closed' : this.formStatus() === 'เต็ม' ? 'full' : 'open',
+        organizer_name: this.formOrganizerName(),
+        organizer_contact_email: this.formOrganizerEmail(),
+        organizer_contact_phone: this.formOrganizerPhone(),
       };
 
       if (this.modalMode() === 'add') {
@@ -272,16 +460,33 @@ export class AdminEventManagementComponent {
     });
   }
 
-  private resolveVenueId(name: string): Observable<number> {
+  private resolveVenueId(name: string, address: string, capacity: number): Observable<number> {
     const trimmed = name.trim();
-    const existing = this.venues().find((v) => v.name.trim() === trimmed);
+    const existing = this.venues().find((v) => v.name.trim().toLowerCase() === trimmed.toLowerCase());
 
     if (existing) {
+      if (address && (!existing.address || existing.address !== address)) {
+        return this.http.put<ApiVenue>(`${API_BASE_URL}/admin/venues/${existing.id}`, {
+          name: existing.name,
+          address: address || existing.address,
+          capacity: capacity || existing.capacity,
+        }).pipe(
+          tap((updated) => {
+            this.venues.update((prev) => prev.map((v) => v.id === updated.id ? updated : v));
+          }),
+          map((v) => v.id),
+          catchError(() => of(existing.id))
+        );
+      }
       return of(existing.id);
     }
 
     return this.http
-      .post<ApiVenue>(`${API_BASE_URL}/admin/venues`, { name: trimmed, address: '', capacity: 0 })
+      .post<ApiVenue>(`${API_BASE_URL}/admin/venues`, {
+        name: trimmed,
+        address: address || '',
+        capacity: Number(capacity) || 100,
+      })
       .pipe(
         tap((venue) => this.venues.update((prev) => [...prev, venue])),
         map((venue) => venue.id)
@@ -309,6 +514,81 @@ export class AdminEventManagementComponent {
           `เปลี่ยนสถานะกิจกรรม "${event.title}" เป็น "${newStatus === 'open' ? 'เปิดรับ' : 'ปิดรับ'}" แล้ว`
         );
       });
+  }
+
+  onSearchChange(value: string) {
+    this.searchQuery.set(value);
+    this.currentPage.set(1);
+  }
+
+  clearSearch() {
+    this.searchQuery.set('');
+    this.currentPage.set(1);
+  }
+
+  onCategoryChange(cat: string) {
+    this.selectedCategory.set(cat);
+    this.currentPage.set(1);
+  }
+
+  onStatusChange(status: string) {
+    this.selectedStatus.set(status);
+    this.currentPage.set(1);
+  }
+
+  onPageSizeChange(size: number | string | null | undefined) {
+    if (size === null || size === undefined || size === '' || Number(size) < 1) {
+      this.pageSize.set(1);
+    } else {
+      this.pageSize.set(Math.floor(Number(size)));
+    }
+    this.currentPage.set(1);
+  }
+
+  setPage(page: number | string) {
+    if (typeof page !== 'number') return;
+    if (page >= 1 && page <= this.totalPages()) {
+      this.currentPage.set(page);
+    }
+  }
+
+  prevPage() {
+    if (this.currentPage() > 1) {
+      this.currentPage.update((p) => p - 1);
+    }
+  }
+
+  nextPage() {
+    if (this.currentPage() < this.totalPages()) {
+      this.currentPage.update((p) => p + 1);
+    }
+  }
+
+  openDeleteModal(event: AdminEventItem, evt: Event) {
+    evt.stopPropagation();
+    this.eventToDelete.set(event);
+    this.isDeleteModalOpen.set(true);
+  }
+
+  closeDeleteModal() {
+    this.isDeleteModalOpen.set(false);
+    this.eventToDelete.set(null);
+  }
+
+  confirmDelete() {
+    const event = this.eventToDelete();
+    if (!event) return;
+
+    this.http.delete(`${API_BASE_URL}/admin/events/${event.id}`).subscribe({
+      next: () => {
+        this.loadEvents();
+        this.showToast('success', `ลบกิจกรรม "${event.title}" เรียบร้อยแล้ว`);
+        this.closeDeleteModal();
+      },
+      error: () => {
+        this.showToast('error', 'ลบกิจกรรมไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      },
+    });
   }
 
   private showToast(type: 'success' | 'error' | 'info', message: string) {

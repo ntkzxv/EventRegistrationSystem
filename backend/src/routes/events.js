@@ -59,7 +59,7 @@ router.post('/events/:id/register', authenticateToken, (req, res) => {
   );
 
   if (existing) {
-    return res.status(409).json({ success: false, message: 'คุณสมัครกิจกรรมนี้ไว้แล้ว' });
+    return res.status(409).json({ success: false, message: 'คุณได้สมัครกิจกรรมนี้ไปแล้ว ไม่สามารถสมัครซ้ำได้' });
   }
 
   const confirmedCount = db.registrations.filter(

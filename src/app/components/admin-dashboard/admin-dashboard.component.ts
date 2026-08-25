@@ -123,6 +123,40 @@ export class AdminDashboardComponent {
   }
 
   exportCSV() {
+    const list = this.filteredRegistrations();
+    if (list.length === 0) {
+      this.showToast('info', 'ไม่พบข้อมูลสำหรับส่งออก CSV');
+      return;
+    }
+
+    const headers = ['ลำดับ', 'ชื่อผู้ลงทะเบียน', 'เข้าร่วมกิจกรรม', 'วันที่ลงทะเบียนสมัคร', 'สถานะ'];
+    const csvRows: string[] = [headers.join(',')];
+
+    list.forEach((item, index) => {
+      const escape = (val: string) => `"${(val || '').replace(/"/g, '""')}"`;
+      csvRows.push([
+        index + 1,
+        escape(item.name),
+        escape(item.eventName),
+        escape(item.registeredDate),
+        escape(item.status),
+      ].join(','));
+    });
+
+    // เพิ่ม UTF-8 BOM (\uFEFF) เพื่อให้ Excel เปิดภาษาไทยได้ถูกต้อง ไม่เป็นภาษาต่างดาว
+    const csvContent = '\uFEFF' + csvRows.join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    const today = new Date().toISOString().slice(0, 10);
+
+    link.setAttribute('href', url);
+    link.setAttribute('download', `รายงานการลงทะเบียน_${today}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
     this.showToast('success', 'ดาวน์โหลดรายงานสรุปผลกิจกรรม (CSV) สำเร็จเรียบร้อย');
   }
 

@@ -104,6 +104,42 @@
       "name": "สวนลุมพินี",
       "address": "ถ.วิทยุ แขวงลุมพินี เขตปทุมวัน กรุงเทพมหานคร",
       "capacity": 1000
+    },
+    {
+      "id": 8,
+      "name": "CW Tower Ratchada",
+      "address": "90 ถ.รัชดาภิเษก แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพมหานคร",
+      "capacity": 300
+    },
+    {
+      "id": 9,
+      "name": "อาคารนวัตกรรมดิจิทัล (Digital Innovation Hall)",
+      "address": "888 ถ.พหลโยธิน แขวงพญาไท เขตพญาไท กรุงเทพมหานคร",
+      "capacity": 250
+    },
+    {
+      "id": 10,
+      "name": "ศูนย์การประชุมแห่งชาติสิริกิติ์ (QSNCC)",
+      "address": "60 ถ.รัชดาภิเษก แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร",
+      "capacity": 5000
+    },
+    {
+      "id": 11,
+      "name": "Impact Muang Thong Thani",
+      "address": "99 ถ.ป๊อปปูล่า ต.บ้านใหม่ อ.ปากเกร็ด นนทบุรี",
+      "capacity": 8000
+    },
+    {
+      "id": 12,
+      "name": "test2addresname",
+      "address": "test2adress",
+      "capacity": 7
+    },
+    {
+      "id": 13,
+      "name": "test3addressname",
+      "address": "test3address",
+      "capacity": 100
     }
   ],
   "events": [
@@ -119,7 +155,10 @@
       "start_date": "2024-11-24T09:00:00",
       "end_date": "2024-11-24T17:00:00",
       "max_seats": 120,
-      "status": "closed"
+      "status": "closed",
+      "created_by": 2,
+      "created_at": "2024-10-01T09:00:00.000Z",
+      "updated_at": "2024-11-23T18:00:00.000Z"
     },
     {
       "id": 2,
@@ -133,7 +172,10 @@
       "start_date": "2024-11-30T13:00:00",
       "end_date": "2024-11-30T17:00:00",
       "max_seats": 40,
-      "status": "open"
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2024-10-05T10:00:00.000Z",
+      "updated_at": "2024-10-05T10:00:00.000Z"
     },
     {
       "id": 3,
@@ -147,7 +189,10 @@
       "start_date": "2024-12-15T09:00:00",
       "end_date": "2024-12-15T18:00:00",
       "max_seats": 500,
-      "status": "open"
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2024-10-10T11:00:00.000Z",
+      "updated_at": "2024-10-10T11:00:00.000Z"
     },
     {
       "id": 4,
@@ -161,7 +206,10 @@
       "start_date": "2024-12-20T10:00:00",
       "end_date": "2024-12-20T16:00:00",
       "max_seats": 200,
-      "status": "open"
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2024-10-15T12:00:00.000Z",
+      "updated_at": "2024-10-15T12:00:00.000Z"
     },
     {
       "id": 5,
@@ -175,7 +223,10 @@
       "start_date": "2025-01-05T11:00:00",
       "end_date": "2025-01-05T20:00:00",
       "max_seats": 1000,
-      "status": "open"
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2024-10-20T13:00:00.000Z",
+      "updated_at": "2024-10-20T13:00:00.000Z"
     },
     {
       "id": 6,
@@ -189,6 +240,153 @@
       "start_date": "2025-01-18T05:00:00",
       "end_date": "2025-01-18T10:00:00",
       "max_seats": 800,
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2024-10-25T14:00:00.000Z",
+      "updated_at": "2024-10-25T14:00:00.000Z"
+    },
+    {
+      "id": 8,
+      "name": "gguih",
+      "description": "กิจกรรมแนะนำทักษะดิจิทัลและการเรียนรู้เครื่องมือออนไลน์",
+      "event_type_id": 1,
+      "venue_id": 9,
+      "organizer_name": "EventHub Team",
+      "organizer_contact_email": "admin@eventhub.go.th",
+      "organizer_contact_phone": "02-123-4567",
+      "start_date": "2024-11-24T09:00:00",
+      "end_date": "2024-11-24T17:00:00",
+      "max_seats": 100,
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2024-11-01T09:00:00.000Z",
+      "updated_at": "2024-11-01T09:00:00.000Z"
+    },
+    {
+      "id": 10,
+      "name": "Data Science & Machine Learning Bootcamp",
+      "description": "คอร์สเรียนเชิงปฏิบัติการด้าน Data Science, Machine Learning และ Python สำหรับผู้เริ่มต้นจนถึงระดับกลาง",
+      "event_type_id": 1,
+      "venue_id": 1,
+      "organizer_name": "Data Science Thailand",
+      "organizer_contact_email": "bootcamp@datascience.th",
+      "organizer_contact_phone": "02-111-2222",
+      "start_date": "2024-10-15T09:00:00",
+      "end_date": "2024-10-15T17:00:00",
+      "max_seats": 50,
+      "status": "closed",
+      "created_by": 2,
+      "created_at": "2024-09-01T08:00:00.000Z",
+      "updated_at": "2024-10-14T18:00:00.000Z"
+    },
+    {
+      "id": 11,
+      "name": "สัมมนา Modern Interior Design Trends",
+      "description": "อัปเดตเทรนด์การออกแบบสถาปัตยกรรมและตกแต่งภายในเพื่อความยั่งยืนประจำปี 2025 โดยสถาปนิกชั้นนำ",
+      "event_type_id": 2,
+      "venue_id": 2,
+      "organizer_name": "สมาคมมัณฑนากรแห่งประเทศไทย",
+      "organizer_contact_email": "info@interiordesign.th",
+      "organizer_contact_phone": "02-333-4444",
+      "start_date": "2024-10-20T13:00:00",
+      "end_date": "2024-10-20T16:00:00",
+      "max_seats": 80,
+      "status": "closed",
+      "created_by": 2,
+      "created_at": "2024-09-10T09:00:00.000Z",
+      "updated_at": "2024-10-19T17:00:00.000Z"
+    },
+    {
+      "id": 12,
+      "name": "Cybersecurity Workshop: Ethical Hacking 101",
+      "description": "เจาะลึกความปลอดภัยไซเบอร์ ฝึกทำ Hands-on Lab กับการทดสอบเจาะระบบและแนวทางป้องกันภัยคุกคาม",
+      "event_type_id": 1,
+      "venue_id": 1,
+      "organizer_name": "CyberSec Guild",
+      "organizer_contact_email": "security@cybersec.th",
+      "organizer_contact_phone": "02-555-6666",
+      "start_date": "2025-02-10T09:00:00",
+      "end_date": "2025-02-10T17:00:00",
+      "max_seats": 3,
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2025-01-05T10:00:00.000Z",
+      "updated_at": "2025-01-05T10:00:00.000Z"
+    },
+    {
+      "id": 13,
+      "name": "Photography & Digital Arts Masterclass",
+      "description": "เทคนิคการถ่ายภาพและการจัดแสงระดับสตูดิโอมืออาชีพ พร้อมการแต่งภาพด้วย Lightroom & Photoshop",
+      "event_type_id": 2,
+      "venue_id": 3,
+      "organizer_name": "PhotoArts Academy",
+      "organizer_contact_email": "masterclass@photoarts.th",
+      "organizer_contact_phone": "02-777-8888",
+      "start_date": "2025-02-25T10:00:00",
+      "end_date": "2025-02-25T16:00:00",
+      "max_seats": 2,
+      "status": "open",
+      "created_by": 2,
+      "created_at": "2025-01-10T11:00:00.000Z",
+      "updated_at": "2025-01-10T11:00:00.000Z"
+    },
+    {
+      "id": 14,
+      "name": "Startup Pitch Day & Networking 2024",
+      "description": "เวทีนำเสนอผลงานสตาร์ทอัพดาวรุ่งต่อหน้านักลงทุนชั้นนำ พร้อมช่วงพูดคุยสร้างเครือข่ายความร่วมมือทางธุรกิจ (กิจกรรมจบงานเรียบร้อยแล้ว)",
+      "event_type_id": 1,
+      "venue_id": 1,
+      "organizer_name": "สมาคมสตาร์ทอัพแห่งประเทศไทย (Tech Startup Association)",
+      "organizer_contact_email": "pitch@techstartup.th",
+      "organizer_contact_phone": "02-888-9999",
+      "start_date": "2024-09-20T10:00:00",
+      "end_date": "2024-09-20T17:00:00",
+      "max_seats": 150,
+      "status": "closed",
+      "created_by": 2,
+      "created_at": "2024-08-01T09:00:00.000Z",
+      "updated_at": "2024-09-21T18:00:00.000Z"
+    },
+    {
+      "id": 15,
+      "name": "test1name",
+      "description": "test1description",
+      "event_type_id": 2,
+      "venue_id": 11,
+      "organizer_name": "test1organizename",
+      "organizer_contact_email": "test1organize@gmail.com",
+      "organizer_contact_phone": "0987654321",
+      "start_date": "2026-08-25T09:00:00",
+      "end_date": "2026-08-25T17:00:00",
+      "max_seats": 5,
+      "status": "open"
+    },
+    {
+      "id": 16,
+      "name": "test2name",
+      "description": "test2description",
+      "event_type_id": 5,
+      "venue_id": 12,
+      "organizer_name": "test2organizername",
+      "organizer_contact_email": "test2organizer@gmail.com",
+      "organizer_contact_phone": "0987654321",
+      "start_date": "2026-08-25T09:00:00",
+      "end_date": "2026-08-25T17:00:00",
+      "max_seats": 7,
+      "status": "open"
+    },
+    {
+      "id": 17,
+      "name": "test3name",
+      "description": "test3description",
+      "event_type_id": 1,
+      "venue_id": 13,
+      "organizer_name": "test3organizename",
+      "organizer_contact_email": "test3organize@gmail.com",
+      "organizer_contact_phone": "0987654321",
+      "start_date": "2026-08-29T11:00:00",
+      "end_date": "2026-08-29T15:00:00",
+      "max_seats": 100,
       "status": "open"
     }
   ],
@@ -227,13 +425,90 @@
       "user_id": 7,
       "status": "confirmed",
       "registered_at": "2026-08-24T11:05:09.023Z"
+    },
+    {
+      "id": 6,
+      "event_id": 8,
+      "user_id": 2,
+      "status": "cancelled",
+      "registered_at": "2026-08-25T05:01:21.625Z"
+    },
+    {
+      "id": 7,
+      "event_id": 8,
+      "user_id": 2,
+      "status": "confirmed",
+      "registered_at": "2026-08-25T05:01:36.369Z"
+    },
+    {
+      "id": 8,
+      "event_id": 12,
+      "user_id": 1,
+      "status": "confirmed",
+      "registered_at": "2025-01-15T09:00:00.000Z"
+    },
+    {
+      "id": 9,
+      "event_id": 12,
+      "user_id": 3,
+      "status": "confirmed",
+      "registered_at": "2025-01-15T10:30:00.000Z"
+    },
+    {
+      "id": 10,
+      "event_id": 12,
+      "user_id": 6,
+      "status": "confirmed",
+      "registered_at": "2025-01-15T11:45:00.000Z"
+    },
+    {
+      "id": 11,
+      "event_id": 13,
+      "user_id": 1,
+      "status": "confirmed",
+      "registered_at": "2025-01-16T14:00:00.000Z"
+    },
+    {
+      "id": 12,
+      "event_id": 13,
+      "user_id": 7,
+      "status": "confirmed",
+      "registered_at": "2025-01-16T15:20:00.000Z"
+    },
+    {
+      "id": 13,
+      "event_id": 2,
+      "user_id": 2,
+      "status": "confirmed",
+      "registered_at": "2026-08-25T05:46:43.140Z"
+    },
+    {
+      "id": 14,
+      "event_id": 14,
+      "user_id": 1,
+      "status": "confirmed",
+      "registered_at": "2024-08-15T09:00:00.000Z"
+    },
+    {
+      "id": 15,
+      "event_id": 14,
+      "user_id": 3,
+      "status": "confirmed",
+      "registered_at": "2024-08-16T10:30:00.000Z"
+    },
+    {
+      "id": 16,
+      "event_id": 17,
+      "user_id": 2,
+      "status": "confirmed",
+      "registered_at": "2026-08-25T06:09:40.988Z"
     }
   ],
   "_meta": {
     "nextUserId": 8,
-    "nextEventId": 8,
-    "nextVenueId": 8,
+    "nextEventId": 18,
+    "nextVenueId": 14,
     "nextEventTypeId": 7,
-    "nextRegistrationId": 6
+    "nextRegistrationId": 17
   }
 }
